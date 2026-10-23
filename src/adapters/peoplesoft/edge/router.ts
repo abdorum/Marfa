@@ -44,7 +44,10 @@ export async function handleApi(request: Request, env: Env = {}): Promise<Respon
   if (path === '/api/v1/health' && request.method === 'GET') {
     try {
       const res = await fetch(`${PS_BASE}/psp/${PS_SITE}/?cmd=login&languageCd=ENG&`, { headers: { 'User-Agent': USER_AGENT }, redirect: 'manual' });
-      return json(200, { sis: res.status, reachable: res.status === 200 });
+      // Who refused: the sign-in page holds no personal data, so its start is safe to show.
+      const said = res.status === 200 ? undefined : (await res.text()).replace(/\s+/g, ' ').slice(0, 160);
+      const by = ['server', 'x-oracle-dms-ecid', 'x-azure-ref', 'x-cache', 'via'].filter(h => res.headers.has(h));
+      return json(200, { sis: res.status, reachable: res.status === 200, said, by });
     } catch (e) {
       return json(200, { sis: 0, reachable: false, error: (e as Error).name });
     }
