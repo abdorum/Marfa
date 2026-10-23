@@ -1,3 +1,8 @@
 name = "ties-bmc"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-09-01"
+
+# /api/v1/* is served by the Raad Worker (raad/wrangler.toml).
+[[services]]
+binding = "RAAD"
+service = "ties-raad"
