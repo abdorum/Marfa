@@ -1,8 +1,3 @@
 name = "ties-bmc"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-09-01"
-
-# Run Raad next to the college system (Azure West Europe, Amsterdam). Some
-# countries are refused by the college firewall (Docs/10); the Netherlands is not.
-[placement]
-region = "azure:westeurope"
