@@ -1,0 +1,21 @@
+{
+  "name": "qaedat-altalib",
+  "version": "0.2.0",
+  "private": true,
+  "description": "قاعدة الطالب: mobile-friendly front end for the BMC PeopleSoft student portal",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev-server.js",
+    "dev:cf": "wrangler pages dev",
+    "deploy": "wrangler pages deploy",
+    "test": "node --test test/*.test.js",
+    "icons": "node tools/make-icons.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "linkedom": "^0.18.0",
+    "wrangler": "^4.152.0"
+  }
+}
