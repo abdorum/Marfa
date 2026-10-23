@@ -1,6 +1,7 @@
 import { Info, LogOut, Send, Settings as Gear, Shuffle } from 'lucide-preact';
 import type { ExtraBlock } from '../../core/model';
 import { lang, strings, type Lang } from '../i18n';
+import { LEGAL } from '../i18n/legal';
 import { navigate } from '../router';
 import { avatar, avatars, prefs, setPrefs, signOut, snapshot, type Theme } from '../store/app';
 import { Avatar, Empty, Link, Row, Tile, TopBar } from '../ui';
@@ -123,6 +124,10 @@ export function About() {
           <p>{t.about.what}</p>
           <p class="label">{t.about.privacy}</p>
           <p class="label">{t.about.unofficial}</p>
+        </div>
+        <div class="card flat">
+          <Row href="/privacy" title={LEGAL.privacy[lang.value].title} />
+          <Row href="/terms" title={LEGAL.terms[lang.value].title} />
         </div>
         <a class="pill solid" href={TELEGRAM} target="_blank" rel="noopener" style={{ justifySelf: 'start' }}><Send /> {t.about.contact}</a>
       </div>

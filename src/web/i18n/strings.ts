@@ -1,5 +1,6 @@
 // Every visible string, in both languages. No text lives in components.
 // Keep it short: no taglines, no helper text (Docs/06-design-system.md).
+import type { ComponentChildren } from 'preact';
 
 export const ar = {
   appName: 'قاعدة الطالب',
@@ -13,6 +14,9 @@ export const ar = {
     badCredentials: 'الرقم الجامعي أو كلمة المرور غير صحيحة.',
     locked: 'محاولات خاطئة كثيرة. انتظر 15 دقيقة حمايةً لحسابك.',
     failed: 'تعذّر الوصول إلى نظام الكلية. حاول بعد قليل.',
+    consent: (terms: ComponentChildren, privacy: ComponentChildren) => ['بالدخول توافق على ', terms, ' و', privacy, '.'],
+    terms: 'شروط الاستخدام',
+    privacy: 'سياسة الخصوصية',
   },
   home: {
     today: 'اليوم',
@@ -80,7 +84,7 @@ export const ar = {
     name: 'TIES · Taleeb Information Enhanced System',
     what: 'طرف ثالث لأنظمة معلومات الطلاب. رعد يتعامل مع نظام الكلية نيابةً عنك.',
     unofficial: 'مشروع طلابي غير رسمي، غير تابع لكلية البترجي الطبية.',
-    privacy: 'لا يُحفظ شيء على أي سيرفر. بياناتك وكلمة مرورك تبقى على جهازك.',
+    privacy: 'بياناتك على جهازك فقط. كلمة مرورك تمر مشفّرة لتسجيل دخولك ولا تُحفظ على أي سيرفر.',
     contact: 'تيليجرام',
   },
   stale: 'آخر تحديث',
@@ -105,6 +109,9 @@ export const en: Strings = {
     badCredentials: 'Wrong student ID or password.',
     locked: 'Too many wrong attempts. Wait 15 minutes to protect your account.',
     failed: 'The college system is not responding. Try again shortly.',
+    consent: (terms: ComponentChildren, privacy: ComponentChildren) => ['By signing in you agree to the ', terms, ' and the ', privacy, '.'],
+    terms: 'terms of use',
+    privacy: 'privacy policy',
   },
   home: {
     today: 'Today',
@@ -172,7 +179,7 @@ export const en: Strings = {
     name: 'TIES · Taleeb Information Enhanced System',
     what: 'A third party for student information systems. Raad deals with the college system for you.',
     unofficial: 'An unofficial student project, not affiliated with Batterjee Medical College.',
-    privacy: 'Nothing is stored on any server. Your data and password stay on your device.',
+    privacy: 'Your data stays on your device. Your password passes encrypted to sign you in and is never stored on a server.',
     contact: 'Telegram',
   },
   stale: 'Updated',

@@ -4,6 +4,7 @@ import { match, path } from './router';
 import { Calendar } from './screens/Calendar';
 import { Course, Courses } from './screens/Courses';
 import { Home } from './screens/Home';
+import { Legal } from './screens/Legal';
 import { Login } from './screens/Login';
 import { About, Me, More, MoreBlock, Notices, Settings } from './screens/Me';
 import { Raad, RaadJob } from './screens/Raad';
@@ -26,12 +27,18 @@ function Screen() {
   if ((m = match('/me/more/:id'))) return <MoreBlock id={m.id!} />;
   if (p === '/me/settings') return <Settings />;
   if (p === '/me/about') return <About />;
+  if (p === '/privacy') return <Legal doc="privacy" />;
+  if (p === '/terms') return <Legal doc="terms" />;
   return <Home />;
 }
 
 function App() {
   if (!ready.value) return null;
-  if (!signedIn.value) return <Login />;
+  if (!signedIn.value) {
+    // The policy and terms must be readable before agreeing to them.
+    if (path.value === '/privacy' || path.value === '/terms') return <div class="app"><Legal doc={path.value === '/privacy' ? 'privacy' : 'terms'} /></div>;
+    return <Login />;
+  }
   return (
     <div class="app">
       {snapshot.value ? <Screen /> : <div class="page"><Empty><span class="spin" aria-label={strings.value.raadScreen.working} /></Empty></div>}

@@ -250,3 +250,10 @@ a.tile:active { background: var(--mint); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- Privacy policy and terms ---------- */
+.legal-note { max-width: 380px; text-align: center; font-size: 12px; line-height: 1.7; color: var(--ink-2); }
+.legal-note a { color: var(--brand); text-decoration: underline; }
+.legal section { display: grid; gap: 4px; }
+.legal h2 { font-size: 15px; font-weight: 500; }
+.legal p { font-size: 14px; line-height: 1.7; color: var(--ink-2); }

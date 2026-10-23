@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { strings } from '../i18n';
+import { Link } from '../ui';
 import { navigate } from '../router';
 import { lastJob, signIn, type SignInFailure } from '../store/app';
 
@@ -47,6 +48,10 @@ export function Login() {
         <h1>{strings.value.appName}</h1>
       </div>
       <LoginForm onDone={() => navigate('/', { replace: true })} />
+      <p class="legal-note">
+        {strings.value.login.consent(<Link href="/terms">{strings.value.login.terms}</Link>, <Link href="/privacy">{strings.value.login.privacy}</Link>)}
+        <br />{strings.value.about.unofficial}
+      </p>
     </main>
   );
 }
