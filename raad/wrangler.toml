@@ -1,4 +1,5 @@
-# Raad's edge Worker. Deploy: npm run deploy:raad
+# Raad's edge Worker. Every push to main deploys it (Workers Builds, root
+# directory "raad"); by hand: npm run deploy:raad
 name = "ties-raad"
 main = "worker.ts"
 compatibility_date = "2026-09-01"
