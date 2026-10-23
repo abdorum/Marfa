@@ -1,36 +1,36 @@
 {
-    "name": "ties",
-    "version": "0.3.0",
-    "private": true,
-    "description": "TIES â€” Taleeb Information Enhanced System (ظ‚ط§ط¹ط¯ط© ط§ظ„ط·ط§ظ„ط¨)",
-    "type": "module",
-    "scripts": {
-        "dev": "node tools/avatars.mjs && vite",
-        "build": "node tools/avatars.mjs && tsc --noEmit && vite build",
-        "preview": "npm run build && wrangler pages dev",
-        "deploy": "npm run build && wrangler pages deploy",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "typecheck": "tsc --noEmit",
-        "icons": "node tools/make-icons.cjs",
-        "avatars": "node tools/avatars.mjs"
-    },
-    "engines": {
-        "node": ">=20"
-    },
-    "dependencies": {
-        "@fontsource-variable/readex-pro": "^5.3.0",
-        "@preact/signals": "^2.11.3",
-        "lucide-preact": "^1.61.0",
-        "preact": "^11.0.1"
-    },
-    "devDependencies": {
-        "@preact/preset-vite": "^2.10.6",
-        "@types/node": "^26.6.5",
-        "linkedom": "^0.18.14",
-        "typescript": "^7.0.2",
-        "vite": "^8.3.5",
-        "vitest": "^5.0.5",
-        "wrangler": "^4.152.0"
-    }
+  "name": "ties",
+  "version": "0.3.0",
+  "private": true,
+  "description": "TIES — Taleeb Information Enhanced System (قاعدة الطالب)",
+  "type": "module",
+  "scripts": {
+    "dev": "node tools/avatars.mjs && vite",
+    "build": "node tools/avatars.mjs && tsc --noEmit && vite build",
+    "preview": "npm run build && wrangler pages dev",
+    "deploy": "npm run build && wrangler pages deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "icons": "node tools/make-icons.cjs",
+    "avatars": "node tools/avatars.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fontsource-variable/readex-pro": "^5.3.0",
+    "@preact/signals": "^2.11.3",
+    "lucide-preact": "^1.61.0",
+    "preact": "^11.0.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^26.6.5",
+    "linkedom": "^0.18.14",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.152.0"
+  }
 }
