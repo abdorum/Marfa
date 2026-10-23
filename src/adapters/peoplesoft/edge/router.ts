@@ -1,7 +1,8 @@
 // The whole edge API (/api/v1/*). Stateless: nothing is stored or logged
 // except an error code. Shared by the Cloudflare Function and `npm run dev`.
 import { PAGE_KEYS, isPageKey } from '../pages';
-import { PsError } from './session';
+import { PS_BASE, PS_SITE } from '../pages';
+import { PsError, USER_AGENT } from './session';
 import { syncPages } from './sync';
 
 const MAX_BODY = 4096;
@@ -39,6 +40,15 @@ function metrics(body: Record<string, unknown>, env: Env): Response {
 
 export async function handleApi(request: Request, env: Env = {}): Promise<Response> {
   const path = new URL(request.url).pathname.replace(/\/+$/, '');
+  // Can this server reach the college system? Opens the sign-in page only; never signs in.
+  if (path === '/api/v1/health' && request.method === 'GET') {
+    try {
+      const res = await fetch(`${PS_BASE}/psp/${PS_SITE}/?cmd=login&languageCd=ENG&`, { headers: { 'User-Agent': USER_AGENT }, redirect: 'manual' });
+      return json(200, { sis: res.status, reachable: res.status === 200 });
+    } catch (e) {
+      return json(200, { sis: 0, reachable: false, error: (e as Error).name });
+    }
+  }
   if (path !== '/api/v1/sync' && path !== '/api/v1/metrics') return json(404, { code: 'NOT_FOUND' });
   if (request.method !== 'POST') return json(405, { code: 'METHOD' });
   if (path === '/api/v1/metrics') {
