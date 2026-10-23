@@ -2,6 +2,7 @@
 // is safe to switch to once it passes this file.
 import { describe, expect, it } from 'vitest';
 import { createDemoSource } from '../../src/adapters/demo/source';
+import { createOfficialSource } from '../../src/adapters/official/source';
 import { createPeopleSoftSource } from '../../src/adapters/peoplesoft/client';
 import type { StudentDataSource } from '../../src/adapters/ports';
 import { SECTION_KEYS, type SyncResult } from '../../src/core/model';
@@ -11,7 +12,27 @@ import { testCtx, toDoc } from '../helpers';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** A fake of the API in Docs/11-integration-contract.md. */
+const OFFICIAL_API: Record<string, unknown> = {
+  '/v1/me': { id: '2000', name: { ar: 'علي أحمد', en: 'Ali Ahmed' }, program: 'FAST', email: 'ali@example.com' },
+  '/v1/terms': [{ code: '2701', name: 'First Semester 2026-2027', start: '2026-09-06', end: '2027-01-15', current: true }],
+  '/v1/terms/2701/enrollments': { items: [{ course: 'PYBIO 101', title: 'Human Biology', units: 4, section: 'PBAB', component: 'LEC', classNbr: '3456', meetings: [{ days: [0, 2], start: '08:00', end: '09:30', room: 'B-104' }] }] },
+  '/v1/terms/2701/attendance': { items: [{ course: 'PYBIO 101', title: 'Human Biology', absencePct: 6.25, examStatus: null }] },
+  '/v1/terms/2701/grades': { items: [{ course: 'PYBIO 101', grade: null, points: null, units: 4 }], unitsInProgress: 4 },
+  '/v1/terms/2701/exams': { items: [{ course: 'PYBIO 101', date: '2026-12-20', start: '09:00', end: '11:00', room: 'Hall 1' }] },
+  '/v1/notices': { holds: [], todos: [] },
+};
+
 const sources: [string, () => StudentDataSource][] = [
+  ['official', () => createOfficialSource({
+    baseUrl: 'https://api.example.edu',
+    getToken: async () => 'token',
+    fetch: async (url, init) => {
+      expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer token');
+      const body = OFFICIAL_API[new URL(String(url)).pathname];
+      return body ? new Response(JSON.stringify(body)) : new Response('{}', { status: 404 });
+    },
+  })],
   ['demo', () => createDemoSource(() => new Date(2026, 9, 22, 10))],
   ['peoplesoft', () => createPeopleSoftSource({
     parseHtml: toDoc,

@@ -42,6 +42,13 @@ GET /v1/terms/2701/attendance
 
 PeopleSoft Integration Broker or REST Query Access Services (QAS) can expose these with existing PeopleSoft queries; no custom application is required.
 
+### Wire format details
+
+- Times are `"HH:MM"` (24-hour, local time). Days are numbers, `0` = Sunday … `6` = Saturday. Dates are `YYYY-MM-DD`.
+- Course keys are `"SUBJECT CATALOG"`, e.g. `"PYBIO 101"`.
+- Missing values are `null` or omitted, never empty strings.
+- The exact TypeScript types are in `src/adapters/official/source.ts` (`ApiMe`, `ApiTerm`, `ApiEnrollment`, `ApiAttendance`, `ApiGrade`, `ApiExam`, `ApiNotices`). The adapter is already written and tested against a mock of this API; connecting it is configuration only.
+
 ## Option B — Read-only database views
 
 If an API is not feasible, read-only views with **row-level filtering by the authenticated student** would work, exposed through a thin service owned by IT. We do **not** request direct database credentials.

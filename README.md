@@ -19,6 +19,7 @@
 | `src/core/` | نموذج البيانات الموحّد، والدمج، والاشتقاقات، ومحرك رعد. لا يعرف شيئاً عن PeopleSoft |
 | `src/adapters/peoplesoft/` | `edge/` يعمل على Cloudflare، و `extract/` و `map.ts` و `client.ts` تعمل في المتصفح، و `pages.ts` القائمة المسموحة |
 | `src/adapters/demo/` | طالب وهمي كامل للعرض والاختبارات (`/?demo`) |
+| `src/adapters/official/` | المصدر الرسمي حسب وثيقة التكامل، جاهز ليوم توفّر واجهة من الكلية |
 | `src/web/` | الواجهة |
 | `functions/api/v1/` | دالة Cloudflare الوحيدة |
 | `test/` | اختبارات الوحدات والعقود والحافة، وصفحات حقيقية مُجهّلة |
