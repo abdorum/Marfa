@@ -47,17 +47,15 @@ npm test
 
 افتح `http://localhost:5173/?capture` وسجّل الدخول. تُحفظ الصفحات في `test/fixtures/peoplesoft/` بعد استبدال الاسم والرقم الجامعي والبريد بقيم وهمية، وترفض الأداة حفظ أي صفحة بقي فيها شيء منها. راجع الملفات قبل أي commit.
 
-## النشر على Cloudflare Pages (مجاني)
+## النشر على Cloudflare (مجاني)
+
+الموقع مربوط بـ GitHub: كل `push` إلى `main` يبنيه Cloudflare Pages وينشره تلقائياً على https://ties-bmc.pages.dev (الإعدادات في `wrangler.toml`).
+
+الجزء الذي يتصل بنظام الكلية (`/api/v1/*`) يعمل في Worker مستقل اسمه `ties-raad` (`raad/`)، مثبّت في أمستردام بجوار نظام الكلية لأن جدار الكلية يرفض بعض الدول (انظر `Docs/10-peoplesoft-notes.md`). الموقع يصل إليه داخلياً عبر service binding، وليس له رابط عام. لنشره يدوياً:
 
 ```bash
-npx wrangler login
+npm run deploy:raad
 ```
-
-```bash
-npm run deploy
-```
-
-اسم المشروع في Cloudflare هو `ties-bmc`، والرابط https://ties-bmc.pages.dev (انظر `wrangler.toml`).
 
 ## إعدادات
 

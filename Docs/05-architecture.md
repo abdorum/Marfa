@@ -152,7 +152,8 @@ Qaedat-AlTalib/
 │       ├── i18n/                  ar.json · en.json · format.ts
 │       ├── ui/                    مكوّنات نظام التصميم
 │       └── screens/               home, calendar, raad, courses, course, me, more, settings
-├── functions/api/v1/[[route]].ts  موجّه الحافة الوحيد
+├── functions/api/v1/[[route]].ts  يمرّر /api/v1 إلى Worker رعد
+├── raad/                          Worker رعد (الحافة)، مثبّت في أمستردام بجوار نظام الكلية
 ├── public/                        manifest, icons, fonts, _headers
 └── test/
     ├── fixtures/peoplesoft/       صفحات حقيقية مُجهّلة
