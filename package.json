@@ -1,21 +1,34 @@
-{
-  "name": "qaedat-altalib",
-  "version": "0.2.0",
-  "private": true,
-  "description": "قاعدة الطالب: mobile-friendly front end for the BMC PeopleSoft student portal",
-  "type": "module",
-  "scripts": {
-    "dev": "node dev-server.js",
-    "dev:cf": "wrangler pages dev",
-    "deploy": "wrangler pages deploy",
-    "test": "node --test test/*.test.js",
-    "icons": "node tools/make-icons.cjs"
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "devDependencies": {
-    "linkedom": "^0.18.0",
-    "wrangler": "^4.152.0"
-  }
+﻿{
+    "name":  "ties",
+    "version":  "0.3.0",
+    "private":  true,
+    "description":  "TIES â€” Taleeb Information Enhanced System (ظ‚ط§ط¹ط¯ط© ط§ظ„ط·ط§ظ„ط¨)",
+    "type":  "module",
+    "scripts":  {
+                    "dev":  "node tools/avatars.mjs \u0026\u0026 vite",
+                    "build":  "node tools/avatars.mjs \u0026\u0026 tsc --noEmit \u0026\u0026 vite build",
+                    "preview":  "npm run build \u0026\u0026 wrangler pages dev",
+                    "deploy":  "npm run build \u0026\u0026 wrangler pages deploy",
+                    "test":  "vitest run",
+                    "test:watch":  "vitest",
+                    "typecheck":  "tsc --noEmit",
+                    "icons":  "node tools/make-icons.cjs",
+                    "avatars":  "node tools/avatars.mjs"
+                },
+    "engines":  {
+                    "node":  "\u003e=20"
+                },
+    "dependencies":  {
+                         "@preact/signals":  "^2.11.3",
+                         "preact":  "^11.0.1"
+                     },
+    "devDependencies":  {
+                            "@preact/preset-vite":  "^2.10.6",
+                            "@types/node":  "^26.6.5",
+                            "linkedom":  "^0.18.14",
+                            "typescript":  "^7.0.2",
+                            "vite":  "^8.3.5",
+                            "vitest":  "^5.0.5",
+                            "wrangler":  "^4.152.0"
+                        }
 }
