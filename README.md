@@ -57,7 +57,7 @@ npx wrangler login
 npm run deploy
 ```
 
-اسم المشروع في Cloudflare هو `ties` (انظر `wrangler.toml`).
+اسم المشروع في Cloudflare هو `ties-bmc`، والرابط https://ties-bmc.pages.dev (انظر `wrangler.toml`).
 
 ## إعدادات
 
