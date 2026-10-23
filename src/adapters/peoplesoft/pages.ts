@@ -21,8 +21,11 @@ export const PAGE_KEYS = Object.keys(PAGES) as PageKey[];
 
 export const isPageKey = (k: string): k is PageKey => Object.hasOwn(PAGES, k);
 
-/** Failure codes the edge reports per page and per request. */
-export type PsCode = 'BAD_CREDENTIALS' | 'SESSION_EXPIRED' | 'NOT_AUTHORIZED' | 'TIMEOUT' | 'UPSTREAM';
+/**
+ * Failure codes the edge reports per page and per request. BLOCKED: the
+ * college firewall refused the server itself (HTTP 403), not the student.
+ */
+export type PsCode = 'BAD_CREDENTIALS' | 'SESSION_EXPIRED' | 'NOT_AUTHORIZED' | 'TIMEOUT' | 'UPSTREAM' | 'BLOCKED';
 
 export interface ServerStep {
   label: string;

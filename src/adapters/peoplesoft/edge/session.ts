@@ -51,6 +51,7 @@ export function slim(html: string): string {
 
 export class PsSession {
   private jar = new CookieJar();
+  private trace: string[] = [];
 
   private async request(url: string, init: RequestInit = {}, hops = 0): Promise<string> {
     const ctrl = new AbortController();
@@ -70,9 +71,13 @@ export class PsSession {
     }
     this.jar.store(res);
     const location = res.headers.get('location');
+    // Safe trace for diagnosing sign-in: status, path, error code, cookie names. Never values.
+    const errorCode = location ? new URL(location, url).searchParams.get('errorCode') : null;
+    this.trace.push(`${init.method ?? 'GET'} ${new URL(url).pathname} ${res.status}${errorCode ? ` errorCode=${errorCode}` : ''} [${res.headers.getSetCookie().map(c => c.split('=')[0]).join(',')}]`);
     if (res.status >= 300 && res.status < 400 && location && hops < 10) {
       return this.request(new URL(location, url).href, { headers: init.headers }, hops + 1);
     }
+    if (res.status === 403) throw new PsError('BLOCKED', [...this.trace].join(' | '));
     if (res.status >= 500) throw new PsError('UPSTREAM', `HTTP ${res.status}`);
     return res.text();
   }
@@ -93,7 +98,10 @@ export class PsSession {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Referer: LOGIN_URL },
       body: new URLSearchParams(form).toString(),
     });
-    if (!this.jar.has('PS_TOKEN') || isLoginPage(html)) throw new PsError('BAD_CREDENTIALS');
+    if (!this.jar.has('PS_TOKEN') || isLoginPage(html)) {
+      const message = /<span[^>]*class=['"]?PSERRORTEXT[^>]*>([^<]*)/i.exec(html)?.[1]?.trim() ?? /id=['"]?login_error[^>]*>([^<]*)/i.exec(html)?.[1]?.trim();
+      throw new PsError('BAD_CREDENTIALS', [...this.trace, `token=${this.jar.has('PS_TOKEN')} loginPage=${isLoginPage(html)}`, message ? `msg=${message.slice(0, 120)}` : ''].filter(Boolean).join(' | '));
+    }
   }
 
   async logout(): Promise<void> {

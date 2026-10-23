@@ -28,6 +28,7 @@ const STEP_LABELS: Record<string, string> = { SIGN_IN: 'SIGN IN' };
 function failureFor(status: number, code: string | undefined): RaadError {
   if (status === 401) return new RaadError('CREDENTIALS');
   if (status === 429) return new RaadError('RATE_LIMIT');
+  if (code === 'BLOCKED') return new RaadError('UNEXPECTED', 'BLOCKED');
   if (code === 'SESSION_EXPIRED' || code === 'NOT_AUTHORIZED') return new RaadError('SESSION', code);
   if (status >= 500) return new RaadError('TRANSIENT', code ?? `HTTP ${status}`);
   return new RaadError('UNEXPECTED', code ?? `HTTP ${status}`);

@@ -86,8 +86,17 @@ describe('handleApi', () => {
     const portal = fakePortal();
     const res = await post({ userid: '1', pwd: 'nope' });
     expect(res.status).toBe(401);
-    expect(await res.json()).toEqual({ code: 'BAD_CREDENTIALS' });
+    const body = await res.json();
+    expect(body).toMatchObject({ code: 'BAD_CREDENTIALS' });
+    expect(body.detail).not.toContain('nope'); // the trace never carries the password
     expect(portal.log.filter(l => l.startsWith('POST'))).toHaveLength(1);
+  });
+
+  it('a firewall 403 is reported as BLOCKED, never as a wrong password', async () => {
+    vi.stubGlobal('fetch', async () => new Response('Forbidden', { status: 403 }));
+    const res = await post({ userid: '1', pwd: 'right' });
+    expect(res.status).toBe(502);
+    expect(await res.json()).toMatchObject({ code: 'BLOCKED' });
   });
 
   it('rejects bad requests before contacting the portal', async () => {

@@ -20,7 +20,7 @@ const ARABIC = /[؀-ۿ]/;
 const normalizeKey = (s: string) => s.split('-')[0]!.replace(/\s+/g, ' ').trim();
 
 export function toErrorCode(code: PsCode | 'PARSE'): ErrorCode {
-  return code === 'SESSION_EXPIRED' || code === 'NOT_AUTHORIZED' ? 'SESSION' : code === 'BAD_CREDENTIALS' ? 'UNAVAILABLE' : code;
+  return code === 'SESSION_EXPIRED' || code === 'NOT_AUTHORIZED' ? 'SESSION' : code === 'BAD_CREDENTIALS' || code === 'BLOCKED' ? 'UNAVAILABLE' : code;
 }
 
 /** The term the pages talk about: from attendance rows, else from the LMS ids ("2701-…"). */

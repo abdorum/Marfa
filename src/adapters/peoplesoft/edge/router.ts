@@ -66,7 +66,8 @@ export async function handleApi(request: Request, env: Env = {}): Promise<Respon
   try {
     return json(200, await syncPages(userid, pwd, pages));
   } catch (e) {
-    if (e instanceof PsError) return json(e.code === 'BAD_CREDENTIALS' ? 401 : 502, { code: e.code });
+    // `detail` is a safe trace (statuses, paths, cookie names), never credentials or values.
+    if (e instanceof PsError) return json(e.code === 'BAD_CREDENTIALS' ? 401 : 502, { code: e.code, detail: e.message !== e.code ? e.message : undefined });
     console.error('sync failed:', (e as Error).message);
     return json(500, { code: 'SERVER_ERROR' });
   }
