@@ -1,0 +1,358 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`fixture: Student Center > extracts the same as last time 1`] = `
+{
+  "advisor": "",
+  "classes": [
+    {
+      "classNbr": "3211",
+      "component": "LEC",
+      "course": "ICPY 100",
+      "lmsId": "2701-ELLEC-ASR-FAST-1-LEC-ICPY100-3211-FST-S1",
+      "meetings": [
+        {
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            0,
+          ],
+          "end": 1020,
+          "room": undefined,
+          "start": 960,
+        },
+        {
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            0,
+          ],
+          "end": 1080,
+          "room": undefined,
+          "start": 1020,
+        },
+        {
+          "days": [
+            2,
+            3,
+            4,
+          ],
+          "end": 1140,
+          "room": undefined,
+          "start": 1080,
+        },
+        {
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            0,
+          ],
+          "end": 1200,
+          "room": undefined,
+          "start": 1140,
+        },
+        {
+          "days": [
+            1,
+            2,
+            3,
+            0,
+          ],
+          "end": 960,
+          "room": undefined,
+          "start": 900,
+        },
+      ],
+      "section": "PB1A",
+    },
+    {
+      "classNbr": "3335",
+      "component": "LEC",
+      "course": "PYAR 101",
+      "lmsId": "2701-FOLEC-ASR-FAST-1-LEC-PYAR101-3335-FST-S1",
+      "meetings": [
+        {
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            0,
+          ],
+          "end": 1230,
+          "room": undefined,
+          "start": 1215,
+        },
+      ],
+      "section": "PBAB",
+    },
+    {
+      "classNbr": "3458",
+      "component": "LAB",
+      "course": "PYBIO 101",
+      "lmsId": "2701-ELLAB-ASR-FAST-1-LAB-PYBIO101-3458-FST-S1-S2",
+      "meetings": [
+        {
+          "days": [
+            1,
+          ],
+          "end": 900,
+          "room": undefined,
+          "start": 840,
+        },
+        {
+          "days": [
+            1,
+          ],
+          "end": 960,
+          "room": undefined,
+          "start": 900,
+        },
+      ],
+      "section": "BABL",
+    },
+    {
+      "classNbr": "3456",
+      "component": "LEC",
+      "course": "PYBIO 101",
+      "lmsId": "2701-ELLEC-ASR-FAST-1-LEC-PYBIO101-3456-FST-S1-S2",
+      "meetings": [
+        {
+          "days": [
+            0,
+          ],
+          "end": 1080,
+          "room": undefined,
+          "start": 1020,
+        },
+        {
+          "days": [
+            1,
+          ],
+          "end": 840,
+          "room": undefined,
+          "start": 780,
+        },
+        {
+          "days": [
+            4,
+          ],
+          "end": 960,
+          "room": undefined,
+          "start": 900,
+        },
+      ],
+      "section": "PBAB",
+    },
+    {
+      "classNbr": "3346",
+      "component": "LEC",
+      "course": "PYISL 101",
+      "lmsId": "2701-FOLEC-ASR-FAST-1-LEC-PYISL101-3346-FST-S1",
+      "meetings": [
+        {
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            0,
+          ],
+          "end": 1290,
+          "room": undefined,
+          "start": 1275,
+        },
+      ],
+      "section": "PBAB",
+    },
+    {
+      "classNbr": "3444",
+      "component": "LEC",
+      "course": "PYMT 101",
+      "lmsId": "2701-ELLEC-ASR-FAST-1-LEC-PYMT101-3444-FST-S1",
+      "meetings": [
+        {
+          "days": [
+            1,
+            0,
+          ],
+          "end": 420,
+          "room": undefined,
+          "start": 360,
+        },
+      ],
+      "section": "PBAB",
+    },
+    {
+      "classNbr": "3507",
+      "component": "LEC",
+      "course": "PYPHY 101",
+      "lmsId": "2701-ELLEC-ASR-FAST-1-LEC-PYPHY101-3507-FST-S1-S2",
+      "meetings": [
+        {
+          "days": [
+            1,
+          ],
+          "end": 1020,
+          "room": undefined,
+          "start": 960,
+        },
+        {
+          "days": [
+            2,
+          ],
+          "end": 960,
+          "room": undefined,
+          "start": 900,
+        },
+        {
+          "days": [
+            4,
+          ],
+          "end": 840,
+          "room": undefined,
+          "start": 780,
+        },
+      ],
+      "section": "PBAB",
+    },
+    {
+      "classNbr": "3357",
+      "component": "LEC",
+      "course": "PYSCS 101",
+      "lmsId": "2701-FOLEC-ASR-FAST-1-LEC-PYSCS101-3357-FST-S1",
+      "meetings": [
+        {
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            0,
+          ],
+          "end": 1350,
+          "room": undefined,
+          "start": 1335,
+        },
+      ],
+      "section": "PBAB",
+    },
+  ],
+  "email": "student@example.com",
+  "firstName": "أحمد",
+  "holds": [],
+  "phone": "",
+  "todos": [],
+}
+`;
+
+exports[`fixture: attendance > extracts the same as last time 1`] = `
+{
+  "from": "2026-09-06",
+  "nameEn": "Ahmed Saleh Alotaibi",
+  "rows": [
+    {
+      "absencePct": 0,
+      "course": "PYPHY 101",
+      "examStatus": "",
+      "program": "FAST",
+      "scope": "semester",
+      "term": "2701",
+      "title": "General Physics",
+    },
+    {
+      "absencePct": 2.94,
+      "course": "PYMT 101",
+      "examStatus": "",
+      "program": "FAST",
+      "scope": "semester",
+      "term": "2701",
+      "title": "Medical Terminology",
+    },
+    {
+      "absencePct": 0,
+      "course": "PYBIO 101",
+      "examStatus": "",
+      "program": "FAST",
+      "scope": "semester",
+      "term": "2701",
+      "title": "Human Biology",
+    },
+  ],
+  "to": "2026-10-15",
+}
+`;
+
+exports[`fixture: exams > extracts the same as last time 1`] = `
+{
+  "exams": [],
+  "published": false,
+  "term": "First Semester 2026-2027",
+}
+`;
+
+exports[`fixture: grades > extracts the same as last time 1`] = `
+{
+  "classes": [
+    {
+      "course": "ICPY 100",
+      "grade": "",
+      "points": undefined,
+      "title": "Intensive Course",
+      "units": undefined,
+    },
+    {
+      "course": "PYAR 101",
+      "grade": "",
+      "points": undefined,
+      "title": "Arabic Language",
+      "units": 1,
+    },
+    {
+      "course": "PYBIO 101",
+      "grade": "",
+      "points": undefined,
+      "title": "Human Biology",
+      "units": 4,
+    },
+    {
+      "course": "PYISL 101",
+      "grade": "",
+      "points": undefined,
+      "title": "Islamic Culture",
+      "units": 1,
+    },
+    {
+      "course": "PYMT 101",
+      "grade": "",
+      "points": undefined,
+      "title": "Medical Terminology",
+      "units": 2,
+    },
+    {
+      "course": "PYPHY 101",
+      "grade": "",
+      "points": undefined,
+      "title": "General Physics",
+      "units": 3,
+    },
+    {
+      "course": "PYSCS 101",
+      "grade": "",
+      "points": undefined,
+      "title": "Study & Communication Skills",
+      "units": 2,
+    },
+  ],
+  "nameAr": "أحمد صالح العتيبي",
+  "stats": {
+    "Units Toward GPA / In Progress": "13.000",
+  },
+  "term": "First Semester 2026-2027",
+}
+`;
