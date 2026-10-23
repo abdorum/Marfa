@@ -1,5 +1,6 @@
 import { Info, LogOut, Send, Settings as Gear, Shuffle } from 'lucide-preact';
-import { strings, type Lang } from '../i18n';
+import type { ExtraBlock } from '../../core/model';
+import { lang, strings, type Lang } from '../i18n';
 import { navigate } from '../router';
 import { avatar, avatars, prefs, setPrefs, signOut, snapshot, type Theme } from '../store/app';
 import { Avatar, Empty, Link, Row, Tile, TopBar } from '../ui';
@@ -126,7 +127,7 @@ export function More() {
     <>
       <TopBar backTo="/me" crumb={<Link href="/me">{t.tabs.me}</Link>} title={t.more.title} />
       <div class="page stack">
-        {s.extras.map(b => <Row href={`/me/more/${encodeURIComponent(b.id)}`} title={b.title} end={<bdi class="label">{b.rows?.length ?? b.fields?.length ?? ''}</bdi>} />)}
+        {s.extras.map(b => <Row href={`/me/more/${encodeURIComponent(b.id)}`} title={blockTitle(b)} end={<bdi class="label">{b.rows?.length ?? b.fields?.length ?? ''}</bdi>} />)}
         {!s.extras.length && <Empty>{t.more.none}</Empty>}
       </div>
     </>
@@ -140,7 +141,7 @@ export function MoreBlock({ id }: { id: string }) {
   if (!b) { navigate('/me/more', { replace: true }); return null; }
   return (
     <>
-      <TopBar backTo="/me/more" crumb={<Link href="/me/more">{t.more.title}</Link>} title={b.title} />
+      <TopBar backTo="/me/more" crumb={<Link href="/me/more">{t.more.title}</Link>} title={blockTitle(b)} />
       <div class="page">
         {b.kind === 'table' && b.columns && (
           <table class="table">
@@ -156,3 +157,5 @@ export function MoreBlock({ id }: { id: string }) {
     </>
   );
 }
+
+const blockTitle = (b: ExtraBlock) => b.titles?.[lang.value] ?? b.titles?.ar ?? b.titles?.en ?? b.title;

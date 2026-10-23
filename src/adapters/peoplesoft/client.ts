@@ -3,6 +3,7 @@
 import { RaadError } from '../../core/bot/types';
 import type { SyncResult } from '../../core/model';
 import type { Credentials, SourceContext, StudentDataSource } from '../ports';
+import { extractCapabilities, extractGrids } from './extract/generic';
 import { extractAttendance, extractCenter, extractExams, extractGrades } from './extract/pages';
 import { mapToSnapshot, type Extracted } from './map';
 import { PAGE_KEYS, type PageKey, type PsCode, type SyncResponse } from './pages';
@@ -59,19 +60,23 @@ export function createPeopleSoftSource(opts: PeopleSoftSourceOptions = {}): Stud
 
       for (const s of body.log ?? []) ctx.step(STEP_LABELS[s.label] ?? s.label, s.ok ? 'ok' : 'fail', { ms: s.ms, note: s.note });
 
-      const extracted: Extracted = {};
+      const extracted: Extracted = { blocks: [] };
       const failures: Partial<Record<PageKey, PsCode | 'PARSE'>> = { ...body.errors };
       for (const key of PAGE_KEYS) {
         const html = body.pages?.[key];
         if (!html) continue;
         try {
-          (extracted as Record<PageKey, unknown>)[key] = EXTRACTORS[key](parseHtml(html));
+          const doc = parseHtml(html);
+          (extracted as Record<PageKey, unknown>)[key] = EXTRACTORS[key](doc);
+          // Unknown grids are a bonus: a failure here must not lose the page.
+          try { extracted.blocks!.push(...extractGrids(doc, key)); } catch { /* ignore */ }
+          if (key === 'center') extracted.capabilities = extractCapabilities(doc);
         } catch {
           failures[key] = 'PARSE';
         }
       }
 
-      const got = PAGE_KEYS.filter(k => extracted[k]);
+      const got = PAGE_KEYS.filter(k => extracted[k] !== undefined);
       if (!got.length) {
         const codes = Object.values(failures);
         throw codes.some(c => c === 'SESSION_EXPIRED' || c === 'NOT_AUTHORIZED')

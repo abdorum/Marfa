@@ -98,6 +98,19 @@ describe('handleApi', () => {
     expect(portal.log).toHaveLength(0);
   });
 
+  it('keeps only whitelisted, bounded metric fields', async () => {
+    const points: unknown[] = [];
+    const env = { METRICS: { writeDataPoint: (p: unknown) => points.push(p) } };
+    const send = (body: unknown) => handleApi(new Request('http://x/api/v1/metrics', { method: 'POST', body: JSON.stringify(body) }), env);
+    const good = { jobType: 'sync', outcome: 'succeeded', attempts: 2, sessionResets: 1, errorClasses: ['NOT_AUTHORIZED', 'evil'], durationMs: 5300, appVersion: '0.3.0', userid: '2412345' };
+    expect((await send(good)).status).toBe(204);
+    expect(points).toEqual([{ indexes: ['sync'], blobs: ['sync', 'succeeded', '0.3.0', 'NOT_AUTHORIZED'], doubles: [2, 1, 5300] }]);
+    expect(JSON.stringify(points)).not.toContain('2412345');
+    expect((await send({ ...good, attempts: -1 })).status).toBe(400);
+    expect((await send({ ...good, jobType: 'x' })).status).toBe(400);
+    expect((await handleApi(new Request('http://x/api/v1/metrics', { method: 'POST', body: JSON.stringify(good) }))).status).toBe(204); // no binding: accepted, dropped
+  });
+
   it('ignores page names outside the allowlist', async () => {
     const portal = fakePortal();
     const res = await post({ userid: '1', pwd: 'secret', pages: ['grades', 'SSS_MY_ACAD', '../x'] });

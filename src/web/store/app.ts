@@ -74,7 +74,18 @@ export async function setPrefs(patch: Partial<Prefs>) {
 }
 
 function sourceFor(m: Mode): StudentDataSource {
-  return m === 'demo' ? createDemoSource() : createPeopleSoftSource();
+  if (m === 'demo') return createDemoSource();
+  // Dev only (`npm run dev`, /?capture): save anonymized pages as test fixtures.
+  const capture = import.meta.env.DEV && new URLSearchParams(location.search).has('capture');
+  return createPeopleSoftSource({
+    onRaw: capture ? (pages, x, cred) => void fetch('/dev/capture', {
+      method: 'POST',
+      body: JSON.stringify({
+        pages,
+        person: { userid: cred.userid, nameAr: x.grades?.nameAr, nameEn: x.attendance?.nameEn, email: x.center?.email, phone: x.center?.phone, firstName: x.center?.firstName },
+      }),
+    }).then(r => r.json()).then(r => console.info('capture', r)) : undefined,
+  });
 }
 
 function putJob(j: Job<any, any>) {

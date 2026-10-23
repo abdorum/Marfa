@@ -1,0 +1,11 @@
+{
+  "known": [
+    "center:STDNT_WEEK_SCHD",
+    "grades:TERM_CLASSES",
+    "grades:TERM_STATS",
+    "attendance:LS_SS_PERS_SRCH",
+    "attendance:A_SLF_ATT_PR_VW",
+    "attendance:A_SLF_ATT_YR_VW"
+  ],
+  "promote": {}
+}

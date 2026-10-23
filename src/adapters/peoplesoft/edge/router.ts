@@ -11,10 +11,44 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
   headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
 });
 
-export async function handleApi(request: Request): Promise<Response> {
+/** Cloudflare bindings. METRICS is a Workers Analytics Engine dataset (optional). */
+export interface Env {
+  METRICS?: { writeDataPoint(p: { blobs?: string[]; doubles?: number[]; indexes?: string[] }): void };
+}
+
+const OUTCOMES = ['succeeded', 'failed', 'needs_input', 'cancelled'];
+const ERROR_CODES = ['BAD_CREDENTIALS', 'SESSION_EXPIRED', 'NOT_AUTHORIZED', 'TIMEOUT', 'UPSTREAM'];
+
+/**
+ * Anonymous Raad statistics (ADR-014). Only whitelisted, bounded fields are
+ * kept; anything else in the body is ignored. No ID, no IP.
+ */
+function metrics(body: Record<string, unknown>, env: Env): Response {
+  const int = (v: unknown, max: number) => (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= max ? (v as number) : undefined);
+  const jobType = body.jobType === 'sync' ? 'sync' : undefined;
+  const outcome = OUTCOMES.includes(String(body.outcome)) ? String(body.outcome) : undefined;
+  const attempts = int(body.attempts, 20);
+  const resets = int(body.sessionResets, 20);
+  const duration = int(body.durationMs, 600_000);
+  const version = /^\d+\.\d+\.\d+$/.test(String(body.appVersion)) ? String(body.appVersion) : undefined;
+  const errors = Array.isArray(body.errorClasses) ? body.errorClasses.filter(e => ERROR_CODES.includes(String(e))).slice(0, 5).sort().join(',') : '';
+  if (!jobType || !outcome || attempts == null || resets == null || duration == null || !version) return json(400, { code: 'BAD_REQUEST' });
+  env.METRICS?.writeDataPoint({ indexes: [jobType], blobs: [jobType, outcome, version, errors], doubles: [attempts, resets, duration] });
+  return new Response(null, { status: 204 });
+}
+
+export async function handleApi(request: Request, env: Env = {}): Promise<Response> {
   const path = new URL(request.url).pathname.replace(/\/+$/, '');
-  if (path !== '/api/v1/sync') return json(404, { code: 'NOT_FOUND' });
+  if (path !== '/api/v1/sync' && path !== '/api/v1/metrics') return json(404, { code: 'NOT_FOUND' });
   if (request.method !== 'POST') return json(405, { code: 'METHOD' });
+  if (path === '/api/v1/metrics') {
+    try {
+      const text = await request.text();
+      return text.length > 1024 ? json(413, { code: 'BAD_REQUEST' }) : metrics(JSON.parse(text), env);
+    } catch {
+      return json(400, { code: 'BAD_REQUEST' });
+    }
+  }
 
   let body: { userid?: unknown; pwd?: unknown; pages?: unknown };
   try {

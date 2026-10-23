@@ -30,6 +30,8 @@ export interface Student {
   email?: string;
   phone?: string;
   advisor?: string;
+  /** What the source says this student can do, e.g. "Enrollment: Add". */
+  capabilities?: string[];
 }
 
 export interface Term {
@@ -116,6 +118,8 @@ export interface ExtraBlock {
   /** Stable fingerprint, e.g. "center:DERIVED_X" */
   id: string;
   title: string;
+  /** Translated titles, once a block is promoted in the source's registry. */
+  titles?: Localized;
   kind: 'table' | 'fields' | 'list' | 'link';
   columns?: string[];
   rows?: string[][];

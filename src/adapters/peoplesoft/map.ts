@@ -2,14 +2,18 @@
 import type { AttendanceRecord, Course, ErrorCode, Exam, GradeRecord, Provenance, Section, SectionKey, Student, SyncResult, Term, TermStats } from '../../core/model';
 import { parseCourseKey } from '../../core/model';
 import { num, toMinutes, usDateToIso } from './extract/dom';
+import { promotedTitle, type FoundBlock } from './extract/generic';
 import type { AttendancePage, CenterPage, ExamsPage, GradesPage } from './extract/pages';
-import { INSTITUTION, PAGES, type PageKey, type PsCode } from './pages';
+import { INSTITUTION, PAGE_KEYS, PAGES, type PageKey, type PsCode } from './pages';
 
 export interface Extracted {
   center?: CenterPage;
   grades?: GradesPage;
   attendance?: AttendancePage;
   exams?: ExamsPage;
+  /** Grids nobody mapped yet, for the More page. */
+  blocks?: FoundBlock[];
+  capabilities?: string[];
 }
 
 const ARABIC = /[؀-ۿ]/;
@@ -103,6 +107,11 @@ export function mapToSnapshot(x: Extracted, failures: Partial<Record<PageKey, Ps
 
   if (x.center || x.grades || x.attendance) data.student = student(x, userid);
   data.courses = [...courses.values()];
+  data.extras = (x.blocks ?? []).map(b => {
+    const ar = promotedTitle(b.id, 'ar');
+    const en = promotedTitle(b.id, 'en');
+    return { ...b, titles: ar || en ? { ar, en } : undefined, firstSeen: fetchedAt, lastSeen: fetchedAt };
+  });
 
   return { data, provenance: provenance(x, failures, fetchedAt), fetchedAt };
 }
@@ -123,6 +132,7 @@ function student(x: Extracted, userid: string): Student {
     email: x.center?.email || undefined,
     phone: x.center?.phone || undefined,
     advisor: x.center?.advisor || undefined,
+    capabilities: x.capabilities?.length ? x.capabilities : undefined,
   };
 }
 
@@ -138,5 +148,9 @@ function provenance(x: Extracted, failures: Partial<Record<PageKey, PsCode | 'PA
   }
   // The student record is assembled from several pages; it is fresh if any of them arrived.
   if (x.center || x.grades || x.attendance) out.student = { status: 'fresh', fetchedAt };
+  // Extras are only complete when every page arrived; otherwise a block from a
+  // missing page would look like it disappeared.
+  const allPages = PAGE_KEYS.every(k => x[k] && !failures[k]);
+  out.extras = allPages ? { status: 'fresh', fetchedAt } : { status: 'error', error: 'UPSTREAM' };
   return out;
 }

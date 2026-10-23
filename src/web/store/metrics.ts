@@ -9,7 +9,7 @@ export function sendMetrics(job: Job<unknown, unknown>, durationMs: number) {
     jobType: job.type,
     outcome: job.state,
     attempts: job.attempt,
-    sessionResets: job.steps.filter(s => s.label === 'SIGN IN').length - 1,
+    sessionResets: Math.max(0, job.steps.filter(s => s.label === 'SIGN IN').length - 1),
     errorClasses: [...new Set(job.steps.filter(s => s.status === 'fail' && s.note).map(s => s.note!))],
     durationMs,
     appVersion: APP_VERSION,
