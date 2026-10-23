@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import type { FailureKind } from '../../core/bot/types';
 import { strings } from '../i18n';
 import { navigate } from '../router';
-import { signIn } from '../store/app';
+import { lastJob, signIn } from '../store/app';
 
 export function LoginForm({ onDone }: { onDone?: () => void }) {
   const t = strings.value.login;
@@ -23,7 +23,15 @@ export function LoginForm({ onDone }: { onDone?: () => void }) {
       <label class="field">{t.userid}<input name="userid" inputMode="numeric" autoComplete="username" required /></label>
       <label class="field">{t.password}<input name="pwd" type="password" autoComplete="current-password" required /></label>
       <label class="check"><input name="remember" type="checkbox" defaultChecked />{t.remember}</label>
-      {error && <p class="error" role="alert">{error === 'CREDENTIALS' ? t.badCredentials : t.failed}</p>}
+      {error && (
+        <div class="error" role="alert">
+          <p>{error === 'CREDENTIALS' ? t.badCredentials : t.failed}</p>
+          {/* What Raad saw, so a report from a student says exactly where it broke. */}
+          <p dir="ltr" style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>
+            {[error, ...(lastJob.value?.steps ?? []).filter(s => s.status === 'fail').map(s => `${s.label}${s.note ? `: ${s.note}` : ''}`)].join(' · ')}
+          </p>
+        </div>
+      )}
       <button class="primary" disabled={busy}>{busy ? <span class="spin" aria-hidden="true" /> : null}{t.submit}</button>
     </form>
   );

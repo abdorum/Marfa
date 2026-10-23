@@ -42,7 +42,9 @@ export const avatars = signal<string[]>([]);
 export const online = signal(navigator.onLine);
 const credentials = signal<Credentials | undefined>(undefined);
 
-export const signedIn = computed(() => !!mode.value && (mode.value === 'demo' || !!credentials.value || !!snapshot.value));
+// Signed in once there is data to show. During the first sign-in the login
+// screen stays up, so a failure is shown there instead of being lost.
+export const signedIn = computed(() => mode.value === 'demo' || (!!mode.value && !!snapshot.value));
 export const hasCredentials = computed(() => mode.value === 'demo' || !!credentials.value);
 export const activeJob = computed(() => jobs.value.find(j => !isTerminal(j)));
 export const lastJob = computed(() => jobs.value[0]);
