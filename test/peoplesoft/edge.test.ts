@@ -1,6 +1,7 @@
 // The edge against a fake portal that reproduces the real failures.
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { handleApi } from '../../src/adapters/peoplesoft/edge/router';
+import { LOCK_SECONDS, MAX_FAILURES, type Store } from '../../src/adapters/peoplesoft/edge/guard';
+import { handleApi, type Env } from '../../src/adapters/peoplesoft/edge/router';
 import { USER_AGENT } from '../../src/adapters/peoplesoft/edge/session';
 import { syncPages } from '../../src/adapters/peoplesoft/edge/sync';
 
@@ -79,8 +80,18 @@ describe('syncPages', () => {
 });
 
 describe('handleApi', () => {
-  const post = (body: unknown, path = '/api/v1/sync') =>
-    handleApi(new Request(`http://x${path}`, { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body) }));
+  const post = (body: unknown, path = '/api/v1/sync', env: Env = {}, headers: Record<string, string> = {}) =>
+    handleApi(new Request(`http://x${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: typeof body === 'string' ? body : JSON.stringify(body) }), env);
+
+  function memoryStore() {
+    const map = new Map<string, { value: string; ttl?: number }>();
+    const store: Store = {
+      get: async k => map.get(k)?.value ?? null,
+      put: async (k, value, o) => { map.set(k, { value, ttl: o?.expirationTtl }); },
+      delete: async k => { map.delete(k); },
+    };
+    return { store, map };
+  }
 
   it('wrong password is a 401 with one sign-in attempt only', async () => {
     const portal = fakePortal();
@@ -110,14 +121,14 @@ describe('handleApi', () => {
   it('keeps only whitelisted, bounded metric fields', async () => {
     const points: unknown[] = [];
     const env = { METRICS: { writeDataPoint: (p: unknown) => points.push(p) } };
-    const send = (body: unknown) => handleApi(new Request('http://x/api/v1/metrics', { method: 'POST', body: JSON.stringify(body) }), env);
+    const send = (body: unknown) => post(body, '/api/v1/metrics', env);
     const good = { jobType: 'sync', outcome: 'succeeded', attempts: 2, sessionResets: 1, errorClasses: ['NOT_AUTHORIZED', 'evil'], durationMs: 5300, appVersion: '0.3.0', userid: '2412345' };
     expect((await send(good)).status).toBe(204);
     expect(points).toEqual([{ indexes: ['sync'], blobs: ['sync', 'succeeded', '0.3.0', 'NOT_AUTHORIZED'], doubles: [2, 1, 5300] }]);
     expect(JSON.stringify(points)).not.toContain('2412345');
     expect((await send({ ...good, attempts: -1 })).status).toBe(400);
     expect((await send({ ...good, jobType: 'x' })).status).toBe(400);
-    expect((await handleApi(new Request('http://x/api/v1/metrics', { method: 'POST', body: JSON.stringify(good) }))).status).toBe(204); // no binding: accepted, dropped
+    expect((await post(good, '/api/v1/metrics')).status).toBe(204); // no binding: accepted, dropped
   });
 
   it('ignores page names outside the allowlist', async () => {
@@ -125,5 +136,60 @@ describe('handleApi', () => {
     const res = await post({ userid: '1', pwd: 'secret', pages: ['grades', 'SSS_MY_ACAD', '../x'] });
     expect(res.status).toBe(200);
     expect(portal.log.filter(l => l.includes('/c/'))).toEqual(['GET /psc/hp/EMPLOYEE/SA/c/SA_LEARNER_SERVICES.SSR_SSENRL_GRADE.GBL']);
+  });
+
+  it('refuses other websites and non-JSON posts before contacting the portal', async () => {
+    const portal = fakePortal();
+    expect((await post({ userid: '1', pwd: 'secret' }, undefined, {}, { Origin: 'https://evil.example' })).status).toBe(403);
+    expect((await post({ userid: '1', pwd: 'secret' }, undefined, {}, { 'Content-Type': 'text/plain' })).status).toBe(415);
+    expect((await post({ userid: '1 OR 1=1', pwd: 'secret' })).status).toBe(400);
+    expect((await post({ userid: '1', pwd: 'x'.repeat(129) })).status).toBe(400);
+    expect(portal.log).toHaveLength(0);
+    expect((await post({ userid: '1', pwd: 'secret' }, undefined, {}, { Origin: 'https://ties-bmc.pages.dev' })).status).toBe(200);
+    expect((await post({ userid: '1', pwd: 'secret' }, undefined, {}, { Origin: 'http://localhost:5173' })).status).toBe(200);
+  });
+
+  it('rests an ID after too many wrong passwords, without asking the portal again', async () => {
+    const portal = fakePortal();
+    const { store, map } = memoryStore();
+    for (let i = 0; i < MAX_FAILURES; i++) expect((await post({ userid: '2412345', pwd: 'nope' }, undefined, { GUARD: store })).status).toBe(401);
+    const signIns = portal.log.filter(l => l.startsWith('POST')).length;
+    const res = await post({ userid: '2412345', pwd: 'secret' }, undefined, { GUARD: store });
+    expect(res.status).toBe(429);
+    expect(await res.json()).toMatchObject({ code: 'LOCKED' });
+    expect(portal.log.filter(l => l.startsWith('POST'))).toHaveLength(signIns);
+    // The store holds a hash and a TTL, never the student ID.
+    expect([...map.keys()].join()).not.toContain('2412345');
+    expect([...map.values()][0]?.ttl).toBe(LOCK_SECONDS);
+  });
+
+  it('a right password clears earlier wrong ones', async () => {
+    fakePortal();
+    const { store, map } = memoryStore();
+    await post({ userid: '7', pwd: 'nope' }, undefined, { GUARD: store });
+    expect(map.size).toBe(1);
+    expect((await post({ userid: '7', pwd: 'secret' }, undefined, { GUARD: store })).status).toBe(200);
+    expect(map.size).toBe(0);
+  });
+
+  it('rate limits by device and by ID', async () => {
+    const portal = fakePortal();
+    const keys: string[] = [];
+    const no = { limit: async ({ key }: { key: string }) => { keys.push(key); return { success: false }; } };
+    expect((await post({ userid: '1', pwd: 'secret' }, undefined, { IP_LIMIT: no }, { 'CF-Connecting-IP': '203.0.113.9' })).status).toBe(429);
+    expect(keys).toEqual(['203.0.113.9']);
+    expect((await post({ userid: '1', pwd: 'secret' }, undefined, { ID_LIMIT: no })).status).toBe(429);
+    expect(portal.log).toHaveLength(0);
+  });
+
+  it('never follows a redirect off the college system', async () => {
+    const seen: string[] = [];
+    vi.stubGlobal('fetch', async (url: string) => {
+      seen.push(new URL(url).host);
+      return new Response(null, { status: 302, headers: { Location: 'https://evil.example/steal' } });
+    });
+    const res = await post({ userid: '1', pwd: 'secret' });
+    expect(res.status).toBe(502);
+    expect(seen.every(h => h === 'sis.bmc.edu.sa')).toBe(true);
   });
 });

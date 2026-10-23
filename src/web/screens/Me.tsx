@@ -7,6 +7,16 @@ import { Avatar, Empty, Link, Row, Tile, TopBar } from '../ui';
 
 const TELEGRAM = 'https://t.me/ItsProf11';
 
+/** Links come from the college pages: only real web links, never javascript: or data:. */
+const safeHref = (href?: string) => {
+  try {
+    const u = new URL(href ?? '');
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export function Me() {
   const s = snapshot.value!;
   const t = strings.value;
@@ -152,7 +162,7 @@ export function MoreBlock({ id }: { id: string }) {
         {b.kind === 'fields' && (
           <div class="card"><dl class="kv">{(b.fields ?? []).map(f => <><dt>{f.label}</dt><dd>{f.value}</dd></>)}</dl></div>
         )}
-        {b.kind === 'link' && b.href && <a class="pill" href={b.href} target="_blank" rel="noopener">{b.title}</a>}
+        {b.kind === 'link' && safeHref(b.href) && <a class="pill" href={safeHref(b.href)} target="_blank" rel="noopener noreferrer">{b.title}</a>}
       </div>
     </>
   );

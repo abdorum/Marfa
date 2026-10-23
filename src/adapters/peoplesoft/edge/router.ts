@@ -2,6 +2,7 @@
 // except an error code. Shared by the Cloudflare Function and `npm run dev`.
 import { PAGE_KEYS, isPageKey } from '../pages';
 import { PS_BASE, PS_SITE } from '../pages';
+import { clearFailures, failures, idKey, limited, MAX_FAILURES, originAllowed, recordFailure, validCredentials, type RateLimit, type Store } from './guard';
 import { PsError, USER_AGENT } from './session';
 import { syncPages } from './sync';
 
@@ -9,12 +10,19 @@ const MAX_BODY = 4096;
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), {
   status,
-  headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
+  headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' },
 });
 
-/** Cloudflare bindings. METRICS is a Workers Analytics Engine dataset (optional). */
+/**
+ * Cloudflare bindings, all optional so dev and tests run without them.
+ * METRICS: Workers Analytics Engine. IP_LIMIT, ID_LIMIT: rate limiting.
+ * GUARD: KV holding wrong-password counters (guard.ts).
+ */
 export interface Env {
   METRICS?: { writeDataPoint(p: { blobs?: string[]; doubles?: number[]; indexes?: string[] }): void };
+  IP_LIMIT?: RateLimit;
+  ID_LIMIT?: RateLimit;
+  GUARD?: Store;
 }
 
 const OUTCOMES = ['succeeded', 'failed', 'needs_input', 'cancelled'];
@@ -54,6 +62,8 @@ export async function handleApi(request: Request, env: Env = {}): Promise<Respon
   }
   if (path !== '/api/v1/sync' && path !== '/api/v1/metrics') return json(404, { code: 'NOT_FOUND' });
   if (request.method !== 'POST') return json(405, { code: 'METHOD' });
+  if (!originAllowed(request.headers.get('Origin'))) return json(403, { code: 'FORBIDDEN' });
+  if (!/^application\/json\b/i.test(request.headers.get('Content-Type') ?? '')) return json(415, { code: 'BAD_REQUEST' });
   if (path === '/api/v1/metrics') {
     try {
       const text = await request.text();
@@ -73,12 +83,24 @@ export async function handleApi(request: Request, env: Env = {}): Promise<Respon
   }
   const userid = String(body.userid ?? '').trim();
   const pwd = String(body.pwd ?? '');
-  if (!userid || !pwd) return json(400, { code: 'BAD_REQUEST' });
+  if (!validCredentials(userid, pwd)) return json(400, { code: 'BAD_REQUEST' });
   const pages = Array.isArray(body.pages) ? body.pages.filter((p): p is string => typeof p === 'string').filter(isPageKey) : PAGE_KEYS;
 
+  // Before anything reaches the college: one device and one ID can only ask so often,
+  // and an ID with too many wrong passwords rests (protects its account from lockout).
+  const id = await idKey(userid);
+  if (await limited(env.IP_LIMIT, request.headers.get('CF-Connecting-IP') ?? 'unknown') || await limited(env.ID_LIMIT, id)) {
+    return json(429, { code: 'RATE_LIMITED' });
+  }
+  const failed = await failures(env.GUARD, id);
+  if (failed >= MAX_FAILURES) return json(429, { code: 'LOCKED' });
+
   try {
-    return json(200, await syncPages(userid, pwd, pages));
+    const out = await syncPages(userid, pwd, pages);
+    await clearFailures(env.GUARD, id, failed);
+    return json(200, out);
   } catch (e) {
+    if (e instanceof PsError && e.code === 'BAD_CREDENTIALS') await recordFailure(env.GUARD, id, failed);
     // `detail` is a safe trace (statuses, paths, cookie names), never credentials or values.
     if (e instanceof PsError) return json(e.code === 'BAD_CREDENTIALS' ? 401 : 502, { code: e.code, detail: e.message !== e.code ? e.message : undefined });
     console.error('sync failed:', (e as Error).message);

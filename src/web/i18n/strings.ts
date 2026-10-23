@@ -11,6 +11,7 @@ export const ar = {
     remember: 'تذكّرني على هذا الجهاز',
     submit: 'دخول',
     badCredentials: 'الرقم الجامعي أو كلمة المرور غير صحيحة.',
+    locked: 'محاولات خاطئة كثيرة. انتظر 15 دقيقة حمايةً لحسابك.',
     failed: 'تعذّر الوصول إلى نظام الكلية. حاول بعد قليل.',
   },
   home: {
@@ -102,6 +103,7 @@ export const en: Strings = {
     remember: 'Remember me on this device',
     submit: 'Sign in',
     badCredentials: 'Wrong student ID or password.',
+    locked: 'Too many wrong attempts. Wait 15 minutes to protect your account.',
     failed: 'The college system is not responding. Try again shortly.',
   },
   home: {

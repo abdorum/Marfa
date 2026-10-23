@@ -126,12 +126,15 @@ export function runSync(): Promise<SyncJob> {
   return running;
 }
 
-export async function signIn(c: Credentials, remember: boolean): Promise<FailureKind | undefined> {
+/** Why signing in failed. LOCKED: too many wrong passwords for this ID, wait 15 minutes. */
+export type SignInFailure = FailureKind | 'LOCKED';
+
+export async function signIn(c: Credentials, remember: boolean): Promise<SignInFailure | undefined> {
   batch(() => { credentials.value = c; mode.value = 'peoplesoft'; });
   const job = await runSync();
   if (job.state !== 'succeeded') {
     batch(() => { credentials.value = undefined; mode.value = undefined; });
-    return job.failure?.kind ?? 'UNEXPECTED';
+    return job.failure?.message === 'LOCKED' ? 'LOCKED' : job.failure?.kind ?? 'UNEXPECTED';
   }
   await db.set('mode', 'peoplesoft');
   if (remember) await vault.save(c);

@@ -45,6 +45,7 @@ describe('PeopleSoft source', () => {
       .then(() => 'none', (e: RaadError) => e.kind);
     expect(await kind(401, 'BAD_CREDENTIALS')).toBe('CREDENTIALS');
     expect(await kind(429)).toBe('RATE_LIMIT');
+    expect(await kind(429, 'LOCKED')).toBe('CREDENTIALS'); // waiting would only extend the lock
     expect(await kind(502, 'NOT_AUTHORIZED')).toBe('SESSION');
     expect(await kind(502, 'TIMEOUT')).toBe('TRANSIENT');
     expect(await kind(400, 'BAD_REQUEST')).toBe('UNEXPECTED');

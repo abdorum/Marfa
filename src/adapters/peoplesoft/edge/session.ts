@@ -75,7 +75,10 @@ export class PsSession {
     const errorCode = location ? new URL(location, url).searchParams.get('errorCode') : null;
     this.trace.push(`${init.method ?? 'GET'} ${new URL(url).pathname} ${res.status}${errorCode ? ` errorCode=${errorCode}` : ''} [${res.headers.getSetCookie().map(c => c.split('=')[0]).join(',')}]`);
     if (res.status >= 300 && res.status < 400 && location && hops < 10) {
-      return this.request(new URL(location, url).href, { headers: init.headers }, hops + 1);
+      const next = new URL(location, url);
+      // The college session cookies go only to the college system, never to another host.
+      if (next.origin !== PS_BASE) throw new PsError('UPSTREAM', `redirect to another host: ${next.host}`);
+      return this.request(next.href, { headers: init.headers }, hops + 1);
     }
     if (res.status === 403) throw new PsError('BLOCKED', [...this.trace].join(' | '));
     if (res.status >= 500) throw new PsError('UPSTREAM', `HTTP ${res.status}`);
