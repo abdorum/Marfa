@@ -9,7 +9,7 @@ TIES (قاعدة الطالب) currently reads student data from the PeopleSoft 
 ## What we ask for
 
 - **Read-only** access, scoped to **the signed-in student's own records**.
-- No staff data, no other students' data, no write access in phase 1.
+- No staff data, no other students' data, no write access.
 - Authentication through the college's existing identity provider (OIDC / SAML via Microsoft Entra ID or similar). The app never sees passwords once this is in place.
 
 ## Option A — REST API (preferred)
@@ -74,6 +74,10 @@ If an API is not feasible, read-only views with **row-level filtering by the aut
 - Usage and reliability metrics from the pilot.
 - Full source code access and a named maintainer.
 
-## Phase 2 (later, separate discussion)
+## Read-only, permanently
 
-Write operations, starting with enrollment add/drop, through official PeopleSoft enrollment APIs (e.g. `SSR_CREATE_ENRL` / the Enrollment Request service), using the same student-scoped token.
+TIES is a viewer. It will not ask for write access of any kind: enrollment, payments and requests stay in the college's official system.
+
+## Not only an API
+
+The same contract can be served by a small read-only bridge hosted by the college in front of any data store it already has (a database view, MongoDB, PostgreSQL, even exported files). TIES never connects to a database directly.
