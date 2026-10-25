@@ -49,7 +49,7 @@
 
 ## الواجهة
 
-- CSP صارمة: `default-src 'self'; script-src 'self'; object-src 'none'`. لا سكربتات ولا خطوط ولا صور من مصادر خارجية، **والخطوط مستضافة ذاتيًا.** ويُسمح بـ `blob:` و`data:` للصور والخطوط، لرسم البطاقة المشاركة على الجهاز.
+- CSP صارمة: `default-src 'self'; script-src 'self'; object-src 'none'`. لا سكربتات ولا خطوط ولا صور من مصادر خارجية، **والخطوط مستضافة ذاتيًا.** ويُسمح بـ `blob:` و`data:` للصور والخطوط، وبالأنماط المضمّنة (`style-src 'unsafe-inline'`)، لرسم البطاقة المشاركة على الجهاز. ولا خطر من حقن الأنماط هنا، لأن الصور والخطوط والاتصال محصورةٌ في الموقع نفسه، فلا يخرج بها شيء.
 - `frame-ancestors 'none'` و`X-Frame-Options: DENY` لمنع تضمين التطبيق داخل موقع آخر (clickjacking).
 - `Cross-Origin-Opener-Policy` و`Cross-Origin-Resource-Policy` بقيمة `same-origin`، و HSTS لسنتين.
 - النصوص القادمة من صفحات الكلية تُعرض نصاً فقط (Preact يهرّبها)، ولا `innerHTML` في أي مكان. الروابط القادمة منها تُقبل فقط إذا كانت `https:` أو `http:`، فلا `javascript:` (صفحات PeopleSoft مليئة بها).
