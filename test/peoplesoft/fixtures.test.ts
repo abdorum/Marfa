@@ -3,8 +3,10 @@
 // tests are the first to fail. Skipped until fixtures are captured.
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { extractAttendance, extractCenter, extractExams, extractGrades } from '../../src/adapters/peoplesoft/extract/pages';
-import { mapToSnapshot } from '../../src/adapters/peoplesoft/map';
+import { extractAttendance, extractCenter, extractExams, extractGrades } from '../../src/adapters/sources/peoplesoft/extract/pages';
+import { mapToSnapshot } from '../../src/adapters/sources/peoplesoft/map';
+import { clashes } from '../../src/core/derive';
+import { mergeSnapshot } from '../../src/core/snapshot';
 import { toDoc } from '../helpers';
 
 const dir = new URL('../fixtures/peoplesoft/', import.meta.url);
@@ -61,11 +63,23 @@ describe.skipIf(!exams)('fixture: exams', () => {
 
 describe.skipIf(!(center && grades && attendance))('fixture: all pages together', () => {
   it('map into one consistent term', () => {
-    const r = mapToSnapshot({ center: extractCenter(center!), grades: extractGrades(grades!), attendance: extractAttendance(attendance!) }, {}, '20000000', '2026-01-01T00:00:00Z');
+    const r = mapToSnapshot({ center: extractCenter(center!), grades: extractGrades(grades!), attendance: extractAttendance(attendance!) }, {}, '20000000', '2026-01-01T00:00:00Z', 'BMC');
     const term = r.data.terms?.[0]?.code;
     expect(term).toMatch(/^\d{4}$/);
     for (const s of r.data.sections ?? []) expect(s.termCode).toBe(term);
     const keys = new Set(r.data.courses?.map(c => c.key));
     for (const s of r.data.sections ?? []) expect(keys.has(s.courseKey)).toBe(true);
+    // Every class on the Student Center is kept: eight classes, seven courses (Human Biology has a lab).
+    expect(r.data.sections).toHaveLength(8);
+    expect(keys.size).toBe(7);
+  });
+
+  it('show the clashes in the real schedule', () => {
+    const r = mapToSnapshot({ center: extractCenter(center!) }, {}, '20000000', '2026-01-01T00:00:00Z', 'BMC');
+    const s = mergeSnapshot(undefined, r, 'peoplesoft');
+    const found = clashes(s).map(c => (c.kind === 'class' ? `${c.day}:${c.a.courseKey}+${c.b.courseKey}` : ''));
+    // The intensive course shares slots with Human Biology and Physics.
+    expect(found).toContain('1:ICPY 100+PYBIO 101');
+    expect(found).toContain('1:ICPY 100+PYPHY 101');
   });
 });

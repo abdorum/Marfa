@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { extractCapabilities, extractGrids } from '../../src/adapters/peoplesoft/extract/generic';
+import { extractCapabilities, extractGrids } from '../../src/adapters/sources/peoplesoft/extract/generic';
 import { toDoc } from '../helpers';
 
 // A grid the college might add one day, in PeopleSoft's usual markup.

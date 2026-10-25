@@ -1,0 +1,158 @@
+// Extracted PeopleSoft pages → the canonical model.
+import type { AttendanceRecord, Course, DataArea, ErrorCode, Exam, GradeRecord, Provenance, Section, Student, SyncResult, Term, TermStats } from '../../../core/model';
+import { normalizeCourseKey, parseCourseKey } from '../../../core/model';
+import { num, toMinutes, usDateToIso } from './extract/dom';
+import { promotedTitle, type FoundBlock } from './extract/generic';
+import type { AttendancePage, CenterPage, ExamsPage, GradesPage } from './extract/pages';
+import { PAGE_KEYS, PAGES, type PageKey, type PsCode } from './pages';
+
+export interface Extracted {
+  center?: CenterPage;
+  grades?: GradesPage;
+  attendance?: AttendancePage;
+  exams?: ExamsPage;
+  /** Grids nobody mapped yet, for the More page. */
+  blocks?: FoundBlock[];
+  capabilities?: string[];
+}
+
+const ARABIC = /[؀-ۿ]/;
+
+export function toErrorCode(code: PsCode | 'PARSE'): ErrorCode {
+  return code === 'SESSION_EXPIRED' || code === 'NOT_AUTHORIZED' ? 'SESSION' : code === 'BAD_CREDENTIALS' || code === 'BLOCKED' ? 'UNAVAILABLE' : code;
+}
+
+/** The term the pages talk about: from attendance rows, else from the LMS ids ("2701-…"). */
+function currentTermCode(x: Extracted): string {
+  const fromAttendance = x.attendance?.rows.find(r => r.scope === 'semester' && r.term)?.term;
+  const fromLms = x.center?.classes.map(c => /^(\d{4})-/.exec(c.lmsId ?? '')?.[1]).find(Boolean);
+  return fromAttendance || fromLms || 'current';
+}
+
+export function mapToSnapshot(x: Extracted, failures: Partial<Record<PageKey, PsCode | 'PARSE'>>, userid: string, fetchedAt: string, institution: string): SyncResult {
+  const termCode = currentTermCode(x);
+  const courses = new Map<string, Course>();
+  // Courses are known by their whole code: "MED 101" and "MED 102" stay two
+  // courses, and a lecture and its lab stay one course with two components.
+  const course = (key: string, extra: Partial<Course> = {}) => {
+    const k = normalizeCourseKey(key);
+    if (!k) return k;
+    const had = courses.get(k) ?? { key: k, ...parseCourseKey(k) };
+    courses.set(k, { ...had, ...Object.fromEntries(Object.entries(extra).filter(([, v]) => v !== undefined && v !== '')) });
+    return k;
+  };
+
+  const data: SyncResult['data'] = {};
+
+  if (x.center) {
+    data.sections = x.center.classes.map((c): Section => ({
+      courseKey: course(c.course, { lmsId: c.lmsId }),
+      termCode,
+      section: c.section,
+      component: c.component,
+      classNbr: c.classNbr || undefined,
+      meetings: c.meetings,
+    }));
+    data.holds = x.center.holds.map(title => ({ kind: 'hold', title }));
+    data.todos = x.center.todos.map(title => ({ kind: 'todo', title }));
+  }
+
+  if (x.grades) {
+    data.grades = x.grades.classes.filter(g => g.course).map((g): GradeRecord => ({
+      courseKey: course(g.course, { title: g.title, units: g.units }),
+      termCode,
+      grade: g.grade || undefined,
+      points: g.points,
+      units: g.units,
+    }));
+    const s = x.grades.stats;
+    const pick = (re: RegExp) => num(Object.entries(s).find(([k]) => re.test(k))?.[1] ?? '');
+    const stats: TermStats = {
+      termCode,
+      gpa: pick(/(^|\/ )GPA$/),
+      unitsTaken: pick(/Toward GPA \/ Taken$/),
+      unitsPassed: pick(/Toward GPA \/ Passed$/),
+      unitsInProgress: pick(/Toward GPA \/ In Progress$/),
+      raw: s,
+    };
+    data.termStats = [stats];
+  }
+
+  if (x.attendance) {
+    data.attendance = x.attendance.rows.map((r): AttendanceRecord => ({
+      courseKey: course(r.course, { title: r.title }),
+      termCode: r.term || termCode,
+      scope: r.scope,
+      absencePct: r.absencePct,
+      examStatus: r.examStatus || undefined,
+    }));
+  }
+
+  if (x.exams) {
+    data.exams = x.exams.exams.flatMap((e): Exam[] => {
+      const date = usDateToIso(e.date);
+      if (!date) return [];
+      const [from = '', to = ''] = e.time.split('-').map(t => t.trim());
+      return [{ courseKey: course(e.course, { title: e.title }), termCode, date, start: toMinutes(from), end: toMinutes(to), room: e.room || undefined }];
+    });
+  }
+
+  // The attendance page's "End Date" is not the term's end (it was weeks
+  // before the term ended in the captured page), so the end stays unknown.
+  const term: Term = {
+    code: termCode,
+    name: x.grades?.term || x.exams?.term || undefined,
+    start: x.attendance?.from,
+    current: true,
+  };
+  data.terms = termCode === 'current' && !term.name ? [] : [term];
+
+  if (x.center || x.grades || x.attendance) data.student = student(x, userid, institution);
+  data.courses = [...courses.values()];
+  data.extras = (x.blocks ?? []).map(b => {
+    const ar = promotedTitle(b.id, 'ar');
+    const en = promotedTitle(b.id, 'en');
+    return { ...b, titles: ar || en ? { ar, en } : undefined, firstSeen: fetchedAt, lastSeen: fetchedAt };
+  });
+
+  return { data, provenance: provenance(x, failures, fetchedAt), fetchedAt };
+}
+
+function student(x: Extracted, userid: string, institution: string): Student {
+  const nameAr = x.grades?.nameAr || undefined;
+  const nameEn = x.attendance?.nameEn || undefined;
+  const first = x.center?.firstName || undefined;
+  return {
+    id: userid,
+    name: { ar: nameAr, en: nameEn },
+    firstName: {
+      ar: first && ARABIC.test(first) ? first : nameAr?.split(' ')[0],
+      en: first && !ARABIC.test(first) ? first : nameEn?.split(' ')[0],
+    },
+    program: x.attendance?.rows[0]?.program || undefined,
+    institution,
+    email: x.center?.email || undefined,
+    phone: x.center?.phone || undefined,
+    advisor: x.center?.advisor || undefined,
+    capabilities: x.capabilities?.length ? x.capabilities : undefined,
+  };
+}
+
+function provenance(x: Extracted, failures: Partial<Record<PageKey, PsCode | 'PARSE'>>, fetchedAt: string) {
+  const out: Partial<Record<DataArea, Provenance>> = {};
+  for (const key of Object.keys(PAGES) as PageKey[]) {
+    const failure = failures[key];
+    for (const area of PAGES[key].areas) {
+      out[area] = x[key] && !failure
+        ? { status: 'fresh', fetchedAt }
+        : { status: 'error', error: toErrorCode(failure ?? 'UPSTREAM') };
+    }
+  }
+  // The student record is assembled from several pages; it is fresh if any of them arrived.
+  if (x.center || x.grades || x.attendance) out.student = { status: 'fresh', fetchedAt };
+  // Extras are only complete when every page arrived; otherwise a block from a
+  // missing page would look like it disappeared.
+  const allPages = PAGE_KEYS.every(k => x[k] && !failures[k]);
+  out.extras = allPages ? { status: 'fresh', fetchedAt } : { status: 'error', error: 'UPSTREAM' };
+  return out;
+}

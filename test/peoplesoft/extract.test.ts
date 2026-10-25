@@ -1,7 +1,7 @@
 // Extractors on synthetic pages; real (anonymized) pages are in fixtures.test.ts.
 import { describe, expect, it } from 'vitest';
-import { parseDays, toMinutes, usDateToIso } from '../../src/adapters/peoplesoft/extract/dom';
-import { extractAttendance, extractCenter, extractExams, extractGrades } from '../../src/adapters/peoplesoft/extract/pages';
+import { parseDays, toMinutes, usDateToIso } from '../../src/adapters/sources/peoplesoft/extract/dom';
+import { extractAttendance, extractCenter, extractExams, extractGrades } from '../../src/adapters/sources/peoplesoft/extract/pages';
 import { toDoc } from '../helpers';
 import { ATTENDANCE, CENTER, EXAMS_NONE, EXAMS_SOME, GRADES } from './samples';
 

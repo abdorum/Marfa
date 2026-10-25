@@ -1,0 +1,91 @@
+/* The ground everything stands on: reset, the blueprint background, type,
+   and the page shell. Logical properties only, so RTL and LTR share every rule. */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+html { background: var(--bg-solid); }
+body {
+  min-height: 100dvh;
+  color: var(--on-bg);
+  font: 400 16px/1.5 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  background: var(--bg-solid);
+}
+/* The blueprint: a soft glow, a fine grid, and a dot field in one corner.
+   Fixed behind everything (background-attachment: fixed is unreliable on iOS). */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(46rem 30rem at 88% -8%, var(--glow-a), transparent 62%),
+    radial-gradient(34rem 26rem at -12% 104%, var(--glow-b), transparent 64%),
+    linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: 220px;
+  block-size: 220px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(rgb(255 255 255 / 22%) 1px, transparent 1.6px) 0 0 / 9px 9px;
+  mask-image: radial-gradient(circle at 0 0, #000 0, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle at 0 0, #000 0, transparent 70%);
+}
+[dir="rtl"] body::after { mask-image: radial-gradient(circle at 100% 0, #000 0, transparent 70%); -webkit-mask-image: radial-gradient(circle at 100% 0, #000 0, transparent 70%); }
+
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+img { display: block; max-inline-size: 100%; }
+bdi, .num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-mono); letter-spacing: -0.01em; }
+.dot { font-family: var(--font-dot); font-variation-settings: 'ROND' 100; letter-spacing: 0.02em; }
+:focus-visible { outline: 2px solid var(--highlight); outline-offset: 2px; border-radius: 8px; }
+.sr { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+[dir="rtl"] .flip { transform: scaleX(-1); }
+[dir="ltr"] .flip-ltr { transform: scaleX(-1); }
+
+/* ---------- Shell ---------- */
+.app { min-height: 100dvh; padding-block-end: calc(104px + env(safe-area-inset-bottom)); }
+.page { max-inline-size: 640px; margin-inline: auto; padding: 0 16px 24px; display: grid; gap: 14px; align-content: start; }
+.page.wide { max-inline-size: 1120px; }
+.stack { display: grid; gap: 10px; }
+.row-flex { display: flex; align-items: center; gap: 10px; }
+.spacer { flex: 1; }
+
+.topbar {
+  max-inline-size: 640px;
+  margin-inline: auto;
+  padding: calc(16px + env(safe-area-inset-top)) 16px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-block-size: 72px;
+}
+.page.wide ~ .topbar, .topbar.wide { max-inline-size: 1120px; }
+.topbar .title { flex: 1; min-inline-size: 0; }
+.topbar h1 { font-size: 26px; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; }
+.topbar .crumb { font-size: 13px; color: var(--on-bg-2); display: flex; gap: 6px; align-items: center; }
+.topbar .crumb a:hover { color: var(--on-bg); }
+
+.label { font-size: 13px; color: var(--ink-2); }
+.muted { color: var(--ink-2); }
+.on-bg-muted { color: var(--on-bg-2); }
+.ok { color: var(--ok); }
+.warn { color: var(--warn); }
+.risk { color: var(--risk); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

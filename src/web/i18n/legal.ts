@@ -3,7 +3,7 @@
 // worse than none. Update UPDATED with any change.
 import type { Lang } from './index';
 
-export const UPDATED = '2026-10-23';
+export const UPDATED = '2026-10-25';
 
 export interface LegalDoc {
   title: string;
@@ -13,60 +13,71 @@ export interface LegalDoc {
 const privacyAr: LegalDoc = {
   title: 'سياسة الخصوصية',
   sections: [
-    { h: 'من نحن', p: ['قاعدة الطالب (TIES) مشروع طلابي فردي مجاني، غير تابع لكلية البترجي الطبية ولا معتمد منها. التواصل عبر قناة تيليجرام: t.me/ItsProf11'] },
+    { h: 'من نحن', p: ['بوابة معلومات الطالب مشروعٌ طلابيٌّ فرديٌّ مجاني، ليس تابعًا لكلية البترجي الطبية ولا معتمدًا منها. والتواصل عبر قناة تيليجرام: t.me/ItsProf11'] },
     {
       h: 'البيانات التي نعالجها',
       p: [
-        'الرقم الجامعي وكلمة المرور، لتسجيل دخولك في نظام الكلية فقط.',
+        'الرقم الجامعي وكلمة المرور، لتسجيل دخولك في نظام الكلية فحسب.',
         'بياناتك كما يعرضها لك نظام الكلية: الاسم، والبريد، والهاتف، والمرشد، والجدول، والحضور، والدرجات، والاختبارات، والتنبيهات.',
       ],
     },
     {
       h: 'كيف تُعالج',
       p: [
-        'عند التحديث يسجّل رعد دخولك في نظام الكلية عبر خادم على Cloudflare في أمستردام بهولندا، بجوار خوادم نظام الكلية نفسه، ثم يعيد الصفحات إلى جهازك عبر اتصال مشفّر.',
-        'تُحلَّل الصفحات وتُحفظ على جهازك فقط.',
+        'عند التحديث يسجّل رعدٌ دخولك في نظام الكلية عبر خادمٍ على Cloudflare في أمستردام بهولندا، بجوار خوادم نظام الكلية نفسه، ثم يعيد الصفحات إلى جهازك عبر اتصالٍ مشفّر، ويخرج من النظام.',
+        'تُقرأ الصفحات وتُستخرج منها بياناتك على جهازك وحده.',
+        'والأداة للعرض فقط: لا تكتب في نظام الكلية شيئًا، ولا تنفّذ عنك إجراءً.',
       ],
     },
     {
       h: 'ما يُحفظ على الخادم',
       p: [
-        'لا تُحفظ كلمة مرورك ولا بياناتك على أي خادم، ولا تُسجَّل في أي سجل.',
-        'عند إدخال كلمة مرور خاطئة فقط: تُحفظ بصمة مشفّرة (SHA-256) لرقمك الجامعي مع عدد المحاولات، لإيقاف التخمين وحماية حسابك من القفل. تُحذف تلقائياً بعد 15 دقيقة، أو عند أول دخول صحيح.',
-        'قد يعالج مزوّد الاستضافة Cloudflare عنوان IP لأغراض تشغيلية وأمنية، ومنها تحديد عدد الطلبات من كل جهاز.',
+        'لا تُحفظ كلمة مرورك ولا بياناتك على أي خادم، ولا تُكتب في أي سجلّ.',
+        'عند إدخال كلمة مرورٍ خاطئة فقط: تُحفظ بصمةٌ مشفّرة (SHA-256) لرقمك الجامعي مع عدد المحاولات، لإيقاف التخمين وحماية حسابك من القفل. وتُحذف تلقائيًا بعد 15 دقيقة، أو عند أول دخولٍ صحيح.',
+        'وعند فتح التطبيق يسأل خادمَ رعد: هل هو موقوف؟ وهل من إعلان؟ ولا يحمل هذا السؤال شيئًا من بياناتك.',
+        'وقد يعالج مزوّد الاستضافة Cloudflare عنوان IP لأغراضٍ تشغيلية وأمنية، ومنها تحديد عدد الطلبات من كل عنوان.',
       ],
     },
     {
       h: 'ما يُحفظ على جهازك',
       p: [
-        'بياناتك الأكاديمية، حتى تسجيل الخروج.',
-        'كلمة المرور، فقط إذا اخترت «تذكّرني»، مشفّرة بمفتاح لا يمكن استخراجه من المتصفح.',
+        'بياناتك الأكاديمية مشفّرةً، ومعها ما تغيّر منها في الأسبوعين الأخيرين، والفصول السابقة، حتى تسجيل الخروج.',
+        'كلمة المرور مشفّرةً، فقط إذا اخترت «تذكّرني».',
+        'تفضيلاتك، وسجلّ عمل رعد بخطواته وأوقاته، ولا بيانات شخصية فيه.',
+        'والتشفير بمفتاحٍ لا يُستخرج من المتصفح. يحميها ممن يقرأ ملفات المتصفح، لا ممن يحمل جهازك مفتوحًا.',
+      ],
+    },
+    {
+      h: 'المشاركة',
+      p: [
+        'لا نبيع بياناتك ولا نشاركها مع أي جهة. لا إعلانات، ولا ملفات تتبّع، ولا أدوات تحليل من أطراف ثالثة.',
+        'إذا شاركتَ بطاقةً صُنعت صورتها على جهازك، وتذهب حيث ترسلها أنت، وتستطيع أن تُخفي منها رقمك الجامعي وبريدك وجوالك.',
+        'وملف التقويم الذي تصدّره يُصنع على جهازك كذلك، ولا يمرّ بخادم.',
       ],
     },
     {
       h: 'الإحصاءات المجهولة',
-      p: ['معطّلة افتراضياً. إن فعّلتها من الإعدادات: نتيجة كل تحديث، وعدد محاولاته، ومدته، ورقم الإصدار. بلا رقم جامعي ولا عنوان IP، وتُحذف بعد 3 أشهر.'],
+      p: ['معطّلةٌ افتراضيًا. إن فعّلتها من الإعدادات: نتيجة كل تحديث، وعدد محاولاته، ومدته، ورقم الإصدار. بلا رقمٍ جامعيٍّ ولا عنوان IP، وتُحذف بعد 3 أشهر.'],
     },
-    { h: 'المشاركة', p: ['لا نبيع بياناتك ولا نشاركها مع أي جهة. لا إعلانات، ولا ملفات تتبّع، ولا أدوات تحليل من أطراف ثالثة.'] },
-    { h: 'النقل خارج المملكة', p: ['المعالجة اللحظية تجري في هولندا، حيث تستضيف الكلية نظامها، لتنفيذ طلبك بعرض بياناتك.'] },
-    { h: 'الأساس والموافقة', p: ['تسجيل دخولك موافقة على هذه السياسة. يمكنك سحبها في أي وقت بتسجيل الخروج.'] },
+    { h: 'النقل خارج المملكة', p: ['المعالجة اللحظية تجري في هولندا، حيث تستضيف الكلية نظامها، تنفيذًا لطلبك بعرض بياناتك.'] },
+    { h: 'الأساس والموافقة', p: ['تسجيل دخولك موافقةٌ على هذه السياسة، ولك سحبها متى شئت بتسجيل الخروج.'] },
     {
       h: 'حقوقك',
       p: [
-        'الاطلاع: كل ما نعالجه عنك معروض لك في التطبيق.',
-        'الحذف: تسجيل الخروج يحذف كل شيء من جهازك، ولا يبقى على الخادم شيء يخصّك.',
-        'لأي طلب أو شكوى: قناة التواصل أعلاه.',
+        'الاطلاع: كل ما نعالجه عنك معروضٌ لك في التطبيق.',
+        'الحذف: تسجيل الخروج يمحو كل شيءٍ من جهازك، ولا يبقى على الخادم شيءٌ يخصّك.',
+        'ولأي طلبٍ أو شكوى: قناة التواصل أعلاه.',
       ],
     },
-    { h: 'الحوادث', p: ['إن وقع أي تسريب أو اختراق نبلغك عبر قناة التواصل، ونبلغ الجهات المختصة وفق نظام حماية البيانات الشخصية.'] },
-    { h: 'التعديل', p: ['نعلن أي تعديل في قناة التواصل، ويظهر تاريخ آخر تحديث أسفل الصفحة.'] },
+    { h: 'الحوادث', p: ['إن وقع تسريبٌ أو اختراق أبلغناك عبر قناة التواصل، وأبلغنا الجهات المختصة وفق نظام حماية البيانات الشخصية.'] },
+    { h: 'التعديل', p: ['نعلن كل تعديلٍ في قناة التواصل، ويظهر تاريخ آخر تحديثٍ أسفل الصفحة.'] },
   ],
 };
 
 const privacyEn: LegalDoc = {
   title: 'Privacy policy',
   sections: [
-    { h: 'Who we are', p: ['TIES is a free, individual student project. It is not affiliated with or endorsed by Batterjee Medical College. Contact: Telegram t.me/ItsProf11'] },
+    { h: 'Who we are', p: ['Taleeb Portal is a free, individual student project. It is not affiliated with or endorsed by Batterjee Medical College. Contact: Telegram t.me/ItsProf11'] },
     {
       h: 'What we process',
       p: [
@@ -77,8 +88,9 @@ const privacyEn: LegalDoc = {
     {
       h: 'How',
       p: [
-        'When you refresh, Raad signs you in to the college system from a Cloudflare server in Amsterdam, the Netherlands, next to the college system\'s own servers, and returns the pages to your device over an encrypted connection.',
-        'The pages are read and stored on your device only.',
+        'When you refresh, Raad signs you in to the college system from a Cloudflare server in Amsterdam, the Netherlands, next to the college system\'s own servers, returns the pages to your device over an encrypted connection, and signs out.',
+        'The pages are read and your data extracted on your device only.',
+        'The tool only shows: it writes nothing to the college system and performs no action for you.',
       ],
     },
     {
@@ -86,21 +98,31 @@ const privacyEn: LegalDoc = {
       p: [
         'Your password and your data are never stored on any server or written to any log.',
         'Only after a wrong password: a hash (SHA-256) of your student ID with the number of attempts, to stop guessing and protect your account from lockout. It is deleted automatically after 15 minutes, or at the first correct sign-in.',
-        'Our host, Cloudflare, may process IP addresses for operations and security, including limiting requests per device.',
+        'When the app opens, it asks Raad\'s server whether it is paused and whether there is an announcement. That question carries none of your data.',
+        'Our host, Cloudflare, may process IP addresses for operations and security, including limiting requests per address.',
       ],
     },
     {
       h: 'What is kept on your device',
       p: [
-        'Your academic data, until you sign out.',
-        'Your password, only if you chose "Remember me", encrypted with a key the browser cannot export.',
+        'Your academic data, encrypted, with what changed in it over the last two weeks and your earlier terms, until you sign out.',
+        'Your password, encrypted, only if you chose "Remember me".',
+        'Your preferences, and Raad\'s log of steps and times, which holds no personal data.',
+        'The encryption key cannot be exported from the browser. It protects against someone reading the browser\'s files, not against someone holding your unlocked device.',
+      ],
+    },
+    {
+      h: 'Sharing',
+      p: [
+        'We do not sell or share your data with anyone. No ads, no tracking cookies, no third-party analytics.',
+        'When you share a card, its picture is made on your device and goes where you send it. You can hide your student ID, email and mobile from it.',
+        'The calendar file you export is also made on your device and never passes through a server.',
       ],
     },
     {
       h: 'Anonymous statistics',
       p: ['Off by default. If you turn them on in Settings: each refresh\'s outcome, attempts, duration and app version. No student ID and no IP address. Deleted after 3 months.'],
     },
-    { h: 'Sharing', p: ['We do not sell or share your data with anyone. No ads, no tracking cookies, no third-party analytics.'] },
     { h: 'Transfer outside the Kingdom', p: ['The momentary processing happens in the Netherlands, where the college hosts its system, to carry out your request to see your data.'] },
     { h: 'Basis and consent', p: ['Signing in is consent to this policy. You can withdraw it at any time by signing out.'] },
     {
@@ -119,18 +141,19 @@ const privacyEn: LegalDoc = {
 const termsAr: LegalDoc = {
   title: 'شروط الاستخدام',
   sections: [
-    { h: 'ما هذه الأداة', p: ['أداة مجانية غير رسمية تعرض بياناتك من نظام معلومات الطلاب في كلية البترجي الطبية بطريقة أوضح. ليست تابعة للكلية ولا معتمدة منها.'] },
-    { h: 'المرجع الرسمي', p: ['نظام الكلية هو المرجع الوحيد. قد تتأخر الأداة أو تخطئ في قراءة البيانات، فتحقق من النظام الرسمي قبل أي قرار مهم، كالغياب والدرجات ومواعيد الاختبارات.'] },
+    { h: 'ما هذه الأداة', p: ['أداةٌ مجانيةٌ غير رسمية تعرض بياناتك من نظام معلومات الطلاب في كلية البترجي الطبية عرضًا أوضح. ليست تابعةً للكلية ولا معتمدةً منها.'] },
+    { h: 'للعرض فقط', p: ['لا تنفّذ الأداة أي إجراء: لا تسجيل مادة ولا حذفها، ولا دفع، ولا رفع طلب. ذلك كلّه في النظام الرسمي.'] },
+    { h: 'المرجع الرسمي', p: ['نظام الكلية هو المرجع وحده. قد تتأخر الأداة أو تخطئ في قراءة البيانات، وما تقدّره من رصيد الغياب تقديرٌ لا سجلّ؛ فتحقّق من النظام الرسمي قبل أي قرارٍ مهم، كالغياب والدرجات ومواعيد الاختبارات.'] },
     {
       h: 'حسابك',
       p: [
-        'استخدم حسابك أنت فقط. لا تدخل بحساب غيرك ولو بإذنه.',
-        'أنت مسؤول عن سرية كلمة مرورك، وعن التزامك بلوائح الكلية وأنظمتها.',
+        'استخدم حسابك أنت فقط، ولا تدخل بحساب غيرك ولو أذن لك.',
+        'وأنت مسؤولٌ عن سرية كلمة مرورك، وعن التزامك بلوائح الكلية وأنظمتها.',
       ],
     },
     { h: 'الاستخدام المقبول', p: ['يُمنع تخمين كلمات المرور، أو محاولة الوصول إلى بيانات غيرك، أو إساءة استخدام الخدمة أو تعطيلها، أو نسخ الموقع لخداع الطلاب.'] },
-    { h: 'بلا ضمان', p: ['تُقدَّم الأداة كما هي، دون أي ضمان. قد تتوقف أو تتغير في أي وقت. لا نتحمّل، في حدود ما تسمح به الأنظمة، أي ضرر ينتج عن الاعتماد عليها بدل النظام الرسمي.'] },
-    { h: 'الإيقاف', p: ['قد نوقف الأداة أو نقيّد استخدامها في أي وقت، وتُوقف فوراً إذا طلبت الكلية ذلك.'] },
+    { h: 'بلا ضمان', p: ['تُقدَّم الأداة كما هي، دون أي ضمان، وقد تتوقف أو تتغير في أي وقت. ولا نتحمّل، في حدود ما تسمح به الأنظمة، ضررًا ينشأ عن الاعتماد عليها بدل النظام الرسمي.'] },
+    { h: 'الإيقاف', p: ['قد نوقف الأداة أو نقيّد استخدامها في أي وقت، وتُوقف فورًا إذا طلبت الكلية ذلك.'] },
     { h: 'الأنظمة المطبّقة', p: ['تخضع هذه الشروط لأنظمة المملكة العربية السعودية.'] },
     { h: 'التواصل', p: ['قناة تيليجرام: t.me/ItsProf11'] },
   ],
@@ -140,7 +163,8 @@ const termsEn: LegalDoc = {
   title: 'Terms of use',
   sections: [
     { h: 'What this is', p: ['A free, unofficial tool that shows your data from the Batterjee Medical College student information system more clearly. It is not affiliated with or endorsed by the college.'] },
-    { h: 'The official record', p: ['The college system is the only official record. The tool may lag or misread data, so check the official system before any important decision, such as absences, grades or exam times.'] },
+    { h: 'Read only', p: ['The tool performs no action: no enrolling or dropping a course, no payments, no requests. All of that stays in the official system.'] },
+    { h: 'The official record', p: ['The college system is the only official record. The tool may lag or misread data, and its absence estimates are estimates, not records; check the official system before any important decision, such as absences, grades or exam times.'] },
     {
       h: 'Your account',
       p: [

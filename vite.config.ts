@@ -1,9 +1,12 @@
 import preact from '@preact/preset-vite';
+import { readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
 import type { Plugin, ViteDevServer } from 'vite';
 import { defineConfig } from 'vitest/config';
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
 const readBody = async (req: IncomingMessage) => {
   const chunks: Buffer[] = [];
@@ -12,23 +15,33 @@ const readBody = async (req: IncomingMessage) => {
 };
 
 /**
- * `npm run dev` runs the same edge code as Cloudflare (/api/v1/*), and in dev
- * only, POST /dev/capture saves anonymized pages as test fixtures.
+ * `npm run dev` runs Raad's server in-process (/api/v1/*, streamed like on
+ * Cloudflare), and in dev only, POST /dev/capture saves anonymized pages as
+ * test fixtures.
  */
-function edgeInDev(): Plugin {
+function raadInDev(): Plugin {
   return {
-    name: 'ties-edge-in-dev',
+    name: 'raad-in-dev',
     configureServer(server: ViteDevServer) {
       server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
         const url = req.url ?? '';
         try {
           if (url.startsWith('/api/')) {
-            const { handleApi } = await server.ssrLoadModule('/src/adapters/peoplesoft/edge/router.ts');
+            const { handleApi } = await server.ssrLoadModule('/raad/server/router.ts');
             const body = req.method === 'POST' ? await readBody(req) : undefined;
-            const response: Response = await handleApi(new Request(`http://localhost${url}`, { method: req.method, body }));
+            const headers = Object.fromEntries(Object.entries(req.headers).filter(([, v]) => typeof v === 'string')) as Record<string, string>;
+            const response: Response = await handleApi(new Request(`http://localhost${url}`, { method: req.method, body, headers }));
             res.statusCode = response.status;
             response.headers.forEach((v, k) => res.setHeader(k, v));
-            res.end(await response.text());
+            if (response.body) {
+              const reader = response.body.getReader();
+              for (;;) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                res.write(value);
+              }
+            }
+            res.end();
             return;
           }
           if (url === '/dev/capture' && req.method === 'POST') {
@@ -63,7 +76,8 @@ function edgeInDev(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [preact(), edgeInDev()],
+  plugins: [preact(), raadInDev()],
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   build: { outDir: 'dist', target: 'es2022' },
   test: {
     include: ['test/**/*.test.ts'],

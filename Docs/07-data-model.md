@@ -4,9 +4,11 @@
 
 ## اللقطة (Snapshot)
 
+الكود في `src/core/model.ts`، وهو المرجع عند أي خلاف مع هذه الوثيقة.
+
 ```ts
 interface Snapshot {
-  schemaVersion: 1;
+  schemaVersion: 2;
   source: SourceId;                // 'peoplesoft' | 'official' | 'demo'، ولاحقًا 'file' و'ics'…
   student: Student;
   terms: Term[];
@@ -19,10 +21,13 @@ interface Snapshot {
   holds: Notice[];
   todos: Notice[];
   extras: ExtraBlock[];            // كل ما اكتُشف ولا مكان له بعد
-  provenance: Record<SectionKey, Provenance>;
+  provenance: Record<DataArea, Provenance>;
+  archive: TermRecord[];           // الفصول السابقة، الأحدث أولًا
+  changes: Change[];               // ما غيّرته التحديثات في أسبوعين، الأحدث أولًا
 }
 
-type SectionKey = 'student' | 'schedule' | 'attendance' | 'grades' | 'exams' | 'notices' | 'extras';
+// مجال البيانات: جزءٌ من اللقطة يُحدَّث وحده (Docs/17)
+type DataArea = 'student' | 'schedule' | 'attendance' | 'grades' | 'exams' | 'notices' | 'extras';
 
 interface Provenance {
   status: 'fresh' | 'stale' | 'error' | 'missing';
@@ -50,12 +55,12 @@ interface Term {
   code: string;                    // "2701"
   name: string;                    // "First Semester 2026-2027"
   start?: string;                  // ISO date — يُستخدم لحساب رقم الأسبوع
-  end?: string;
+  end?: string;                    // إن عرفه المصدر. في PeopleSoft لا يُعرف، فيُستعمل طول الفصل المعتاد من ملف المؤسسة
   current: boolean;
 }
 
 interface Course {
-  key: string;                     // "PYBIO 101"
+  key: string;                     // "PYBIO 101": الرمز كاملًا (normalizeCourseKey)
   subject: string;                 // "PYBIO"
   catalog: string;                 // "101"
   title: string;                   // "Human Biology" — كما في المصدر، بلا ترجمة آلية
@@ -159,29 +164,44 @@ interface ExtraBlock {
 - القسم الناجح **يستبدل** القديم بالكامل، فلا دمج على مستوى الصفوف. هذا يمنع بقاء صفوف حُذفت من المصدر.
 - القسم الفاشل **يبقى كما هو** وتتغير حالته إلى `stale` مع ذكر الخطأ.
 - `extras`: تُحدَّث `lastSeen` للموجود. الكتلة التي غابت في تحديثين ناجحين متتاليين تُحذف.
-- عند تغيير `schemaVersion` تُطبَّق دالة ترحيل (migration)، وإن لم توجد تُمسح اللقطة ويُعاد الجلب.
+- إذا انتقل المصدر إلى فصلٍ جديد، حُفظ الفصل السابق كاملًا في `archive` قبل أن يُستبدل.
+- وإن بقي الفصل نفسه قُوبلت اللقطة الجديدة بالسابقة، وأُضيف ما تغيّر إلى `changes`، ويبقى أسبوعين.
+- عند تغيير `schemaVersion` تُطبَّق دالة ترحيل (`migrateSnapshot`)، فلا يفقد أحد بياناته. والإصدار 1 يُرحَّل إلى 2.
 
-## الاشتقاقات (core/derive)
+## الأرشيف والتغيّرات
+
+```ts
+interface TermRecord {             // فصلٌ انتقل عنه المصدر
+  term: Term;
+  courses: Course[]; sections: Section[]; attendance: AttendanceRecord[];
+  grades: GradeRecord[]; termStats: TermStats[]; exams: Exam[];
+  archivedAt: string;
+}
+
+type Change = { id: string; at: string } & (
+  | { kind: 'grade'; courseKey: string; from?: string; to: string }
+  | { kind: 'absence'; courseKey: string; from: number; to: number }
+  | { kind: 'room' | 'time' | 'class-added' | 'class-removed'; courseKey: string; component: string }
+  | { kind: 'exam-added' | 'exam-changed' | 'exam-removed'; courseKey: string; date?: string }
+  | { kind: 'hold-added' | 'hold-removed' | 'todo-added' | 'todo-removed'; title: string }
+  | { kind: 'gpa'; from?: number; to: number }
+);
+```
+
+## الاشتقاقات (`src/core/derive/`)
 
 | الدالة | الناتج |
 |---|---|
-| `academicWeek(term, now)` | رقم الأسبوع منذ `term.start`، وهو الرقم الضخم في الملف |
-| `todayMeetings(snapshot, now)` | محاضرات اليوم مع حالاتها: انتهت، الآن، التالية |
-| `nextMeeting(snapshot, now)` | المحاضرة القادمة ولو في يوم آخر |
-| `alerts(snapshot, prefs, now)` | إيقافات، وغياب ≥ 50% من الحد، واختبار خلال 7 أيام |
-| `courseView(snapshot, key)` | كل ما يخص مادة واحدة، لصفحة المادة |
-| `attendanceLevel(pct, limit)` | `ok` أو `warn` أو `risk` |
-| `clashes(snapshot)` | **النسخة 1:** المحاضرات والاختبارات المتداخلة في الوقت |
-| `absenceBudget(record, sections, term, limit)` | **النسخة 1:** كم محاضرة يستطيع الطالب أن يغيبها بعد، تقريبًا |
-| `changes(previous, current)` | **النسخة 1:** ما تغيّر منذ التحديث السابق: قاعة، أو وقت، أو درجة، أو اختبار |
+| `academicWeek` / `termProgress` | رقم الأسبوع، وموضع الطالب من الفصل للمسطرة |
+| `meetingsOn` / `withStates` | محاضرات يومٍ بحالاتها: انتهت، الآن، التالية |
+| `nowAndNext` | الجارية وما بقي منها، والتالية وما بقي إليها، وهل انتهى اليوم |
+| `weekGrid` | الأسبوع أيامًا وساعات، والمتداخل جنبًا إلى جنب ومعلَّمًا |
+| `clashes` | محاضرتان أو اختباران في وقتٍ واحد |
+| `attendanceLevel` | `ok` أو `warn` أو `risk` |
+| `absenceBudget` | كم محاضرةً يستطيع الطالب أن يغيبها بعدُ، تقديرًا لا سجلًّا |
+| `alerts` | الحرمان، والقيود، والغياب، والتعارض، والاختبارات القريبة، والمطلوب |
+| `courseList` / `courseView` | المواد بمكوّناتها (نظري، عملي…)، وكل ما يخصّ المادة |
+| `courseColors` | لونٌ ثابتٌ لكل مادة، لا يتكرر ما اتسعت اللوحة |
+| `diffSnapshots` | ما تغيّر بين لقطتين من الفصل نفسه |
 
-## ما يُضاف في النسخة 1
-
-| الإضافة | لماذا |
-|---|---|
-| **مفتاح المادة الكامل** دون قصّ عند الشرطة، والتمييز بين شعب المادة الواحدة | إصلاح دمج مادتين متشابهتين في بطاقة واحدة |
-| **أرشيف الفصول:** الفصل المنتهي يُحفظ قبل أن يستبدله الجديد | اليوم يمحو كل تحديث للدرجات ما قبله، فلا يمكن رسم تطوّر المعدل |
-| **اللقطة السابقة** تُحفظ للمقارنة | لحساب «التغيّرات» |
-| إعادة تسمية `SectionKey` إلى `DataArea` | `Section` تعني الشعبة، فالاسم الحالي مربك ([17-concepts-and-names.md](17-concepts-and-names.md)) |
-
-كل إضافة تغيّر `schemaVersion` ومعها دالة ترحيل، فلا يفقد أحد بياناته.
+وملف التقويم (`src/core/ics.ts`) يحوّل الجدول والاختبارات إلى iCalendar، بتنبيهٍ قبل كل محاضرةٍ بربع ساعة، وقبل كل اختبارٍ بيوم.

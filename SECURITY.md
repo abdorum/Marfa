@@ -1,6 +1,6 @@
 # Security
 
-TIES (قاعدة الطالب) handles student credentials, so security reports are taken seriously.
+Taleeb Portal (بوابة معلومات الطالب) handles student credentials, so security reports are taken seriously.
 
 ## Reporting a vulnerability
 

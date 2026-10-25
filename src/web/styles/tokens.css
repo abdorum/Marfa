@@ -1,0 +1,121 @@
+/* Design tokens in two layers (Docs/06-design-system.md; خطة النسخة 1: أ6).
+   Primitives are the identity's raw colors; components use only the
+   semantic layer, so a new identity swaps the primitives and nothing else.
+
+   The identity: an electric indigo between day and night (never black),
+   a blueprint grid, white cards, lime and volt-blue accents, a mono face
+   for figures and a dot-matrix face for the big ones. */
+@import '@fontsource-variable/readex-pro/wght.css';
+@import '@fontsource-variable/jetbrains-mono/wght.css';
+@import '@fontsource-variable/doto/full.css';
+
+:root {
+  /* ---- Primitives ---- */
+  --p-indigo-50: #F3F3FE;
+  --p-indigo-100: #E6E7FC;
+  --p-indigo-200: #CBCDF7;
+  --p-indigo-300: #A7AAF0;
+  --p-indigo-400: #8186E3;
+  --p-indigo-500: #6266D8;
+  --p-indigo-600: #4E52C6;
+  --p-indigo-700: #3C40A6;
+  --p-indigo-800: #2A2D7D;
+  --p-indigo-900: #1C1E55;
+  --p-indigo-950: #12143B;
+  --p-volt-300: #A9BCFF;
+  --p-volt-500: #3D63FF;
+  --p-volt-600: #2B4CE6;
+  --p-lime-300: #ECFAA8;
+  --p-lime-400: #D7F25E;
+  --p-lime-500: #BFDD33;
+  --p-green-500: #1F9D63;
+  --p-amber-500: #C98205;
+  --p-red-500: #DC3F48;
+  --p-white: #FFFFFF;
+
+  /* ---- Semantic: day (the identity's own) ---- */
+  --bg-top: var(--p-indigo-500);
+  --bg-bottom: var(--p-indigo-700);
+  --bg-solid: var(--p-indigo-600);
+  --grid-line: rgb(255 255 255 / 11%);
+  --glow-a: rgb(169 188 255 / 55%);
+  --glow-b: rgb(215 242 94 / 16%);
+  --on-bg: #FFFFFF;
+  --on-bg-2: rgb(255 255 255 / 74%);
+  --on-bg-line: rgb(255 255 255 / 22%);
+  --glass: rgb(255 255 255 / 12%);
+  --glass-strong: rgb(255 255 255 / 20%);
+
+  --surface: #FFFFFF;
+  --surface-2: var(--p-indigo-50);
+  --surface-3: var(--p-indigo-100);
+  --ink: var(--p-indigo-950);
+  --ink-2: #565A87;
+  --ink-3: #8A8DB3;
+  --line: #E4E5F3;
+
+  --night: var(--p-indigo-950);
+  --night-2: var(--p-indigo-900);
+  --on-night: #FFFFFF;
+  --on-night-2: rgb(255 255 255 / 66%);
+  --night-line: rgb(255 255 255 / 12%);
+
+  --brand: var(--p-indigo-600);
+  --accent: var(--p-volt-500);
+  --accent-soft: color-mix(in srgb, var(--p-volt-500) 12%, var(--surface));
+  --highlight: var(--p-lime-400);
+  --on-highlight: var(--p-indigo-950);
+
+  --ok: var(--p-green-500);
+  --warn: var(--p-amber-500);
+  --risk: var(--p-red-500);
+  --ok-soft: color-mix(in srgb, var(--ok) 13%, var(--surface));
+  --warn-soft: color-mix(in srgb, var(--warn) 15%, var(--surface));
+  --risk-soft: color-mix(in srgb, var(--risk) 12%, var(--surface));
+
+  --dock: rgb(18 20 59 / 90%);
+  --dock-ink: rgb(255 255 255 / 62%);
+
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 70%) inset, 0 18px 40px -22px rgb(18 20 59 / 70%), 0 2px 6px -2px rgb(18 20 59 / 25%);
+  --shadow-float: 0 16px 40px -12px rgb(18 20 59 / 55%);
+
+  --r-card: 24px;
+  --r-inner: 16px;
+  --r-chip: 10px;
+
+  --font-ui: 'Readex Pro Variable', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+  /* Arabic letters in figures fall back to the UI face, never a system monospace. */
+  --font-mono: 'JetBrains Mono Variable', 'Readex Pro Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-dot: 'Doto Variable', 'JetBrains Mono Variable', 'Readex Pro Variable', ui-monospace, monospace;
+
+  --ease: cubic-bezier(.2, 0, 0, 1);
+  color-scheme: light;
+}
+
+/* ---- Semantic: night. Deep indigo, still not black. ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-top: #1E2163; --bg-bottom: #10123A; --bg-solid: #171A4C;
+    --grid-line: rgb(255 255 255 / 6%); --glow-a: rgb(110 140 255 / 30%); --glow-b: rgb(215 242 94 / 8%);
+    --surface: #1F2260; --surface-2: #272B70; --surface-3: #30357E;
+    --ink: #EEF0FF; --ink-2: #ADB0DD; --ink-3: #7F83B8; --line: #333882;
+    --night: #0D0F33; --night-2: #151848;
+    --accent: #7D97FF; --accent-soft: color-mix(in srgb, #7D97FF 16%, #1F2260);
+    --ok: #4CC98E; --warn: #F2B544; --risk: #FF7A80;
+    --ok-soft: color-mix(in srgb, #4CC98E 16%, #1F2260); --warn-soft: color-mix(in srgb, #F2B544 16%, #1F2260); --risk-soft: color-mix(in srgb, #FF7A80 16%, #1F2260);
+    --shadow-card: 0 1px 0 rgb(255 255 255 / 6%) inset, 0 18px 40px -22px rgb(0 0 0 / 70%);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg-top: #1E2163; --bg-bottom: #10123A; --bg-solid: #171A4C;
+  --grid-line: rgb(255 255 255 / 6%); --glow-a: rgb(110 140 255 / 30%); --glow-b: rgb(215 242 94 / 8%);
+  --surface: #1F2260; --surface-2: #272B70; --surface-3: #30357E;
+  --ink: #EEF0FF; --ink-2: #ADB0DD; --ink-3: #7F83B8; --line: #333882;
+  --night: #0D0F33; --night-2: #151848;
+  --accent: #7D97FF; --accent-soft: color-mix(in srgb, #7D97FF 16%, #1F2260);
+  --ok: #4CC98E; --warn: #F2B544; --risk: #FF7A80;
+  --ok-soft: color-mix(in srgb, #4CC98E 16%, #1F2260); --warn-soft: color-mix(in srgb, #F2B544 16%, #1F2260); --risk-soft: color-mix(in srgb, #FF7A80 16%, #1F2260);
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 6%) inset, 0 18px 40px -22px rgb(0 0 0 / 70%);
+  color-scheme: dark;
+}

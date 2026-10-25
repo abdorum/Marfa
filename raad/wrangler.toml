@@ -1,8 +1,14 @@
-# Raad's edge Worker. Every push to main deploys it (Workers Builds, root
-# directory "raad"); by hand: npm run deploy:raad
+# Raad's server (the Worker). Every push to main deploys it (Workers Builds,
+# root directory "raad"); by hand: npm run deploy:raad
+# The name predates the project's new name; Workers Builds is tied to it, and
+# nobody sees it (the Worker has no public address).
 name = "ties-raad"
 main = "worker.ts"
 compatibility_date = "2026-09-01"
+# Variables set in the dashboard survive deploys: the owner pauses Raad
+# (RAAD_PAUSED = 1, RAAD_MESSAGE_AR/EN) or posts an announcement (NOTICE_AR/EN)
+# there, without touching code (README: «إيقاف رعد والإعلان»).
+keep_vars = true
 # Only the site may call it, through the service binding.
 workers_dev = false
 preview_urls = false
@@ -12,17 +18,18 @@ preview_urls = false
 [placement]
 region = "azure:westeurope"
 
-# Abuse protection (src/adapters/peoplesoft/edge/guard.ts).
+# Abuse protection (server/guard.ts).
 # Wrong-password counters, keyed by a hash of the ID, kept 15 minutes.
 [[kv_namespaces]]
 binding = "GUARD"
 id = "b2a0c22c36c5408db153ce90fccc4583"
 
-# One device: 30 syncs a minute (a campus Wi-Fi is shared by many students).
+# One address: 300 syncs a minute. A campus Wi-Fi puts many students behind
+# one address; the per-ID limit below is what protects accounts.
 [[ratelimits]]
 name = "IP_LIMIT"
 namespace_id = "1001"
-simple = { limit = 30, period = 60 }
+simple = { limit = 300, period = 60 }
 
 # One student ID: 6 syncs a minute.
 [[ratelimits]]

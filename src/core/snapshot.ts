@@ -1,22 +1,28 @@
-// Merging sync results into the stored snapshot. A section that synced
-// replaces its fields completely; a section that failed keeps its old data
-// and is marked stale, so a partial failure never erases anything.
+// Merging sync results into the stored snapshot. An area that synced replaces
+// its fields completely; an area that failed keeps its old data and is marked
+// stale, so a partial failure never erases anything. A term the source moved
+// on from goes to the archive, and what changed is remembered.
+import { diffSnapshots, keepChanges } from './derive/changes';
+import { currentTerm } from './derive/schedule';
 import {
-  SECTION_FIELDS, SECTION_KEYS, SCHEMA_VERSION, emptySnapshot,
-  type Course, type ExtraBlock, type SectionKey, type Snapshot, type SourceId, type Student, type SyncResult, type Term,
+  AREA_FIELDS, DATA_AREAS, SCHEMA_VERSION, emptySnapshot,
+  type Course, type ExtraBlock, type DataArea, type Snapshot, type SourceId, type Student, type SyncResult, type Term, type TermRecord,
 } from './model';
 
+/** Terms kept in the archive. */
+const ARCHIVE_MAX = 16;
+
 export function mergeSnapshot(prev: Snapshot | undefined, result: SyncResult, source: SourceId): Snapshot {
-  const base = prev && prev.schemaVersion === SCHEMA_VERSION && prev.source === source ? prev : emptySnapshot(source);
+  const base = prev && prev.source === source ? migrateSnapshot(prev) ?? emptySnapshot(source) : emptySnapshot(source);
   const next: Snapshot = { ...base, provenance: { ...base.provenance } };
 
-  for (const key of SECTION_KEYS) {
+  for (const key of DATA_AREAS) {
     const p = result.provenance[key];
     if (!p) continue;
     if (p.status === 'fresh') {
       if (key === 'extras') next.extras = mergeExtras(base.extras, result.data.extras ?? [], result.fetchedAt);
       else if (key === 'student') next.student = mergeStudent(base.student, result.data.student);
-      else for (const field of SECTION_FIELDS[key]) assignField(next, result.data, field);
+      else for (const field of AREA_FIELDS[key]) assignField(next, result.data, field);
       next.provenance[key] = p;
     } else {
       // Keep what we had; remember the failure.
@@ -29,12 +35,54 @@ export function mergeSnapshot(prev: Snapshot | undefined, result: SyncResult, so
 
   next.courses = upsert(base.courses, result.data.courses ?? [], c => c.key, mergeCourse);
   next.terms = mergeTerms(base.terms, result.data.terms ?? []);
+
+  const before = currentTerm(base);
+  const after = currentTerm(next);
+  if (before && after && before.code !== after.code) {
+    if (hasTermData(base, before.code)) {
+      next.archive = [archiveTerm(base, before, result.fetchedAt), ...base.archive.filter(r => r.term.code !== before.code)].slice(0, ARCHIVE_MAX);
+    }
+  } else if (prev) {
+    next.changes = keepChanges(diffSnapshots(base, next, result.fetchedAt), base.changes, result.fetchedAt);
+  }
   return next;
 }
 
-// A fresh section with no rows is an empty list, not "unknown".
-function assignField<K extends keyof Snapshot>(to: Snapshot, from: Partial<Snapshot>, k: K) {
-  to[k] = (from[k] ?? (k === 'student' ? undefined : [])) as Snapshot[K];
+/** A snapshot saved by an older version, brought up to this one; undefined if unknown. */
+export function migrateSnapshot(s: unknown): Snapshot | undefined {
+  if (!s || typeof s !== 'object') return undefined;
+  const v = (s as { schemaVersion?: unknown }).schemaVersion;
+  if (v === SCHEMA_VERSION) return s as Snapshot;
+  if (v === 1) {
+    const old = s as Omit<Snapshot, 'schemaVersion' | 'archive' | 'changes'>;
+    return { ...old, schemaVersion: SCHEMA_VERSION, archive: [], changes: [] };
+  }
+  return undefined;
+}
+
+const hasTermData = (s: Snapshot, code: string) =>
+  [s.sections, s.attendance, s.grades, s.exams].some(list => list.some(x => x.termCode === code));
+
+/** Everything about one term, as it stood before the source moved on. */
+export function archiveTerm(s: Snapshot, term: Term, at: string): TermRecord {
+  const of = <T extends { termCode: string }>(xs: T[]) => xs.filter(x => x.termCode === term.code);
+  const sections = of(s.sections);
+  const keys = new Set([...sections, ...of(s.grades), ...of(s.attendance)].map(x => x.courseKey));
+  return {
+    term: { ...term, current: false },
+    courses: s.courses.filter(c => keys.has(c.key)),
+    sections,
+    attendance: of(s.attendance),
+    grades: of(s.grades),
+    termStats: of(s.termStats),
+    exams: of(s.exams),
+    archivedAt: at,
+  };
+}
+
+// A fresh area with no rows is an empty list, not "unknown".
+function assignField<K extends keyof Snapshot>(to: Snapshot, from: SyncResult['data'], k: K) {
+  to[k] = ((from as Partial<Snapshot>)[k] ?? (k === 'student' ? undefined : [])) as Snapshot[K];
 }
 
 function upsert<T>(old: T[], incoming: T[], key: (t: T) => string, combine: (a: T, b: T) => T): T[] {
@@ -65,7 +113,7 @@ function mergeTerms(old: Term[], incoming: Term[]): Term[] {
   const merged = upsert(old, incoming, t => t.code, (a, b) => ({ ...a, ...stripUndefined(b) }));
   if (incoming.some(t => t.current)) {
     const current = new Set(incoming.filter(t => t.current).map(t => t.code));
-    for (const t of merged) t.current = current.has(t.code);
+    return merged.map(t => ({ ...t, current: current.has(t.code) }));
   }
   return merged;
 }
@@ -87,6 +135,11 @@ export function mergeExtras(old: ExtraBlock[], seen: ExtraBlock[], at: string): 
   return out;
 }
 
-export function sectionStatus(s: Snapshot | undefined, key: SectionKey) {
+export function areaStatus(s: Snapshot | undefined, key: DataArea) {
   return s?.provenance[key] ?? { status: 'missing' as const };
+}
+
+/** The newest time any area was fetched. */
+export function lastFetched(s: Snapshot | undefined): string | undefined {
+  return Object.values(s?.provenance ?? {}).map(p => p?.fetchedAt).filter((x): x is string => !!x).sort().pop();
 }

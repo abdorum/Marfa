@@ -72,6 +72,7 @@
 
 **Attendance**
 - `LS_SS_PERS_SRCH_NAME_DISPLAY` (الاسم بالإنجليزية)، و `A_SF_ATT_DER_TERM_BEGIN_DT` و `A_SF_ATT_DER_END_DATE`.
+- **تنبيه:** «End Date» في صفحة الحضور **ليس نهاية الفصل.** كانت في الصفحة الملتقطة يوم 2026-10-23 تاريخ 2026-10-15، والفصل ماضٍ بعدها. فلا تُعدّ نهايةً للفصل، وإلا اختفت المحاضرات بعدها من الجدول. والبداية «Start Date» تُستعمل بداية الفصل.
 - `A_SLF_ATT_PR_VW_{ACAD_PROG,STRM,CRSE_ID,SUBJECT,CATALOG_NBR,DESCR,PER_ORG_DESCRSHORT,DESCR10}$N` للفصل.
 - `A_SLF_ATT_YR_VW_*$N` للسنة.
 

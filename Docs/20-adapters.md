@@ -4,7 +4,7 @@
 
 ## العقد
 
-كل محوّل ينفّذ منفذًا واحدًا ([src/adapters/ports.ts](../src/adapters/ports.ts)):
+كل محوّل ينفّذ منفذًا واحدًا ([src/ports/source.ts](../src/ports/source.ts)):
 
 ```ts
 interface StudentDataSource {
@@ -14,10 +14,13 @@ interface StudentDataSource {
 }
 
 interface AdapterManifest {
+  id: SourceId;                                    // 'peoplesoft'
+  reads: string;                                   // المصدر الذي يقرؤه، كما يعرفه الناس
   tier: 'A' | 'B' | 'C' | 'D';                     // انظر الفئات أدناه
   provides: DataArea[];                            // ما يقدّمه: الجدول، والحضور، والدرجات…
-  credentials: 'none' | 'token' | 'password';      // ما يحتاجه من الطالب
+  credentials: 'none' | 'token' | 'password';      // ما يحتاجه من الطالب. كلمة المرور للفئة د وحدها
   maintainer: string;                              // من يصونه
+  readOnly: true;                                  // دائمًا (ADR-020)
 }
 ```
 
@@ -88,5 +91,6 @@ interface AdapterManifest {
 1. مجلد جديد في `src/adapters/<id>/`.
 2. `manifest` بالقدرات والفئة والصائن.
 3. عيّنات وهمية أو مُجهّلة في `test/fixtures/<id>/`.
-4. تشغيل اختبارات المطابقة حتى تنجح كلها.
+4. إضافته إلى `ADAPTERS` في `test/conformance/sources.test.ts`، وتشغيل اختبارات المطابقة حتى تنجح كلها.
+   ولمحوّلٍ من الفئة د: موصّلٌ لخادم رعد (`raad/server/connector.ts`) يُسجَّل في `raad/server/connectors.ts`.
 5. ملف مؤسسة يشير إلى المحوّل.

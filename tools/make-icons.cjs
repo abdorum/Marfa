@@ -1,51 +1,53 @@
-﻿// Renders public/icons/icon.svg's shapes to PNG (iOS needs PNG home-screen icons).
+// Renders public/icons/icon.svg's shapes to PNG (iOS needs PNG home-screen icons).
 // Usage: npm run icons
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-// [x, y, w, h, radius, color] on a 512 grid, painted in order.
+// [x, y, w, h, [top-left, top-right, bottom-right, bottom-left radius], color] on a 512 grid, painted in order.
+// The gate (بوابة) with a card in its doorway: the product's mark.
 const SHAPES = [
-  [0, 0, 512, 512, 112, '#1E4645'],
-  [112, 132, 288, 256, 40, '#ffffff'],
-  [112, 132, 288, 72, 40, '#E6F3F1'],
-  [112, 172, 288, 32, 0, '#E6F3F1'],
-  [176, 100, 28, 68, 14, '#ffffff'],
-  [308, 100, 28, 68, 14, '#ffffff'],
-  [160, 244, 64, 44, 12, '#2B8C84'],
-  [244, 244, 64, 44, 12, '#CFE8E4'],
-  [160, 308, 64, 44, 12, '#CFE8E4'],
-  [244, 308, 64, 44, 12, '#CFE8E4'],
+  [0, 0, 512, 512, [112, 112, 112, 112], ['#6266D8', '#3C40A6']],
+  [128, 96, 256, 320, [128, 128, 28, 28], '#FFFFFF'],
+  [172, 150, 168, 266, [84, 84, 0, 0], '#12143B'],
+  [206, 318, 100, 64, [14, 14, 14, 14], '#D7F25E'],
+  [244, 220, 24, 24, [12, 12, 12, 12], '#3D63FF'],
 ];
 
-function coverage(px, py, [x, y, w, h, r]) {
-  // 4x4 supersampling of a rounded rectangle.
-  let hit = 0;
-  for (let sy = 0; sy < 4; sy++) for (let sx = 0; sx < 4; sx++) {
-    const X = px + (sx + 0.5) / 4, Y = py + (sy + 0.5) / 4;
-    if (X < x || X > x + w || Y < y || Y > y + h) continue;
-    const cx = Math.min(Math.max(X, x + r), x + w - r), cy = Math.min(Math.max(Y, y + r), y + h - r);
-    if ((X - cx) ** 2 + (Y - cy) ** 2 <= r * r) hit++;
-  }
-  return hit / 16;
+function inside(X, Y, x, y, w, h, [tl, tr, br, bl]) {
+  if (X < x || X > x + w || Y < y || Y > y + h) return false;
+  const corner = (cx, cy, r) => (X - cx) ** 2 + (Y - cy) ** 2 <= r * r;
+  if (X < x + tl && Y < y + tl) return corner(x + tl, y + tl, tl);
+  if (X > x + w - tr && Y < y + tr) return corner(x + w - tr, y + tr, tr);
+  if (X > x + w - br && Y > y + h - br) return corner(x + w - br, y + h - br, br);
+  if (X < x + bl && Y > y + h - bl) return corner(x + bl, y + h - bl, bl);
+  return true;
 }
 
 function render(size, fullBleed) {
   const s = size / 512;
   const buf = Buffer.alloc(size * size * 4);
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+  for (let py = 0; py < size; py++) for (let px = 0; px < size; px++) {
     let rgba = [0, 0, 0, 0];
     SHAPES.forEach((shape, i) => {
-      const [sx, sy, w, h, r, color] = shape;
-      const scaled = [sx * s, sy * s, w * s, h * s, (i === 0 && fullBleed ? 0 : r) * s];
-      const a = coverage(x, y, scaled);
-      if (!a) return;
-      const c = hex(color);
-      const outA = a + rgba[3] * (1 - a);
-      rgba = [0, 1, 2].map(k => (c[k] * a + rgba[k] * rgba[3] * (1 - a)) / (outA || 1)).concat(outA);
+      const [sx, sy, w, h, radii, color] = shape;
+      const r = radii.map(v => (i === 0 && fullBleed ? 0 : v) * s);
+      // 4x4 supersampling.
+      let hit = 0;
+      for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) {
+        if (inside(px + (b + 0.5) / 4, py + (a + 0.5) / 4, sx * s, sy * s, w * s, h * s, r)) hit++;
+      }
+      const cov = hit / 16;
+      if (!cov) return;
+      // The background is a vertical gradient.
+      const c = Array.isArray(color)
+        ? hex(color[0]).map((v, k) => v + (hex(color[1])[k] - v) * (py / size))
+        : hex(color);
+      const outA = cov + rgba[3] * (1 - cov);
+      rgba = [0, 1, 2].map(k => (c[k] * cov + rgba[k] * rgba[3] * (1 - cov)) / (outA || 1)).concat(outA);
     });
-    const o = (y * size + x) * 4;
+    const o = (py * size + px) * 4;
     buf[o] = rgba[0]; buf[o + 1] = rgba[1]; buf[o + 2] = rgba[2]; buf[o + 3] = Math.round(rgba[3] * 255);
   }
   return png(size, buf);
@@ -69,7 +71,7 @@ function png(size, rgba) {
 }
 
 const out = path.join(__dirname, '..', 'public', 'icons');
-// iOS rounds the corners itself, so its icon is full-bleed.
+// iOS rounds the corners itself, so its icon is full-bleed; so is the maskable one.
 fs.writeFileSync(path.join(out, 'icon-180.png'), render(180, true));
 fs.writeFileSync(path.join(out, 'icon-192.png'), render(192, false));
 fs.writeFileSync(path.join(out, 'icon-512.png'), render(512, true));

@@ -31,8 +31,11 @@ export function match(pattern: string, p = path.value): Record<string, string> |
   return params;
 }
 
-/** Which bottom tab a path belongs to. */
-export function tabOf(p: string): 'home' | 'calendar' | 'raad' | 'courses' | 'me' {
+export type Tab = 'home' | 'schedule' | 'raad' | 'courses' | 'me';
+
+/** Which dock tab a path belongs to. */
+export function tabOf(p: string): Tab {
   const first = p.split('/')[1] ?? '';
-  return first === 'calendar' || first === 'raad' || first === 'courses' || first === 'me' ? first : 'home';
+  if (first === 'calendar') return 'schedule';
+  return first === 'schedule' || first === 'raad' || first === 'courses' || first === 'me' ? first : 'home';
 }

@@ -4,7 +4,7 @@
 
 ## Purpose
 
-TIES (قاعدة الطالب) currently reads student data from the PeopleSoft self-service pages on the student's behalf. The app is built so that this source can be replaced by an **official, read-only** interface without any change to the user interface. This document specifies the smallest interface that would allow that.
+Taleeb Portal (بوابة معلومات الطالب) currently reads student data from the PeopleSoft self-service pages on the student's behalf. The app is built so that this source can be replaced by an **official, read-only** interface without any change to the user interface. This document specifies the smallest interface that would allow that.
 
 ## What we ask for
 
@@ -76,7 +76,7 @@ If an API is not feasible, read-only views with **row-level filtering by the aut
 
 ## Read-only, permanently
 
-TIES is a viewer. It will not ask for write access of any kind: enrollment, payments and requests stay in the college's official system.
+Taleeb Portal is a viewer. It will not ask for write access of any kind: enrollment, payments and requests stay in the college's official system.
 
 ## Not only an API
 

@@ -1,91 +1,108 @@
-import { useState } from 'preact/hooks';
-import { Check, Plus, RefreshCw, X, Zap } from 'lucide-preact';
-import type { Job } from '../../core/bot/types';
-import { minutesAgo, strings } from '../i18n';
-import { navigate } from '../router';
-import { activeJob, hasCredentials, jobs, online, raadStatus, runSync } from '../store/app';
-import { Empty, Notice, Row, TopBar } from '../ui';
+// Raad's page: who he is (the data-fetching server), what he does and never
+// does, how he works, what he is doing now, and his log.
+import { Check, MapPin, RefreshCw, X } from 'lucide-preact';
+import type { Job } from '../../../raad/engine/types';
+import { PRODUCT } from '../../app/product';
+import { INSTITUTION } from '../../institutions';
+import { Card } from '../cards/Card';
+import { ago, lang, strings } from '../i18n';
+import { failureText, RaadLine, stepLabel } from '../raad/RaadLine';
+import { activeJob, hasCredentials, jobs, lastUpdated, mode, online, portal, raadStatus, server } from '../state';
+import { Empty, RaadAvatar, TopBar } from '../ui';
 import { LoginForm } from './Login';
 
-function RaadStatus() {
-  const t = strings.value.raadScreen;
-  const status = raadStatus.value;
-  const job = activeJob.value;
-  const [cls, label] =
-    status === 'working' ? ['', t.working]
-    : status === 'retrying' ? ['retry', t.retrying(job?.attempt ?? 0, job?.maxAttempts ?? 0)]
-    : status === 'needs' ? ['needs', t.needsYou]
-    : status === 'offline' ? ['off', t.offline]
-    : ['', t.ready];
-  return <span class={`status ${cls}`}><i />{label}</span>;
-}
-
-const jobTitle = (j: Job<any, any>) => (j.type === 'sync' ? strings.value.raadScreen.sync : j.type);
-
-export function Raad() {
-  const t = strings.value;
-  const [sheet, setSheet] = useState(false);
-  const list = jobs.value;
-
+function JobRow({ j }: { j: Job<any, any> }) {
+  const t = strings.value.raad;
+  const done = j.state === 'succeeded';
+  const failed = j.state === 'failed' || j.state === 'needs_input';
+  const steps = j.steps.filter(s => s.status !== 'start' && s.key !== 'attempt');
   return (
-    <>
-      <TopBar title={t.raadScreen.title} end={<RaadStatus />} />
-      <div class="page">
-        {!hasCredentials.value && (
-          <div class="card stack">
-            <Notice tone="risk">{t.raadScreen.needsYou}</Notice>
-            <LoginForm />
-          </div>
-        )}
-        <div class="stack">
-          {list.map(j => (
-            <Row href={`/raad/${j.id}`} state={j.state === 'running' || j.state === 'waiting_retry' ? 'now' : undefined}
-              title={jobTitle(j)}
-              meta={`${t.jobState[j.state]} · ${t.ago(minutesAgo(j.updatedAt) ?? 0)}`}
-              end={j.state === 'succeeded' ? <Check /> : j.state === 'failed' || j.state === 'needs_input' ? <X class="risk" /> : <Zap />} />
-          ))}
-          {!list.length && <Empty>{t.raadScreen.empty}</Empty>}
-        </div>
-
-        {sheet && (
-          <section class="sheet" role="dialog" aria-label={t.raadScreen.newTask}>
-            <span class="grab" />
-            <h2 class="section-title">{t.raadScreen.newTask}</h2>
-            <button class="row outlined" disabled={!hasCredentials.value || !!activeJob.value || !online.value}
-              onClick={() => { setSheet(false); void runSync(); }}>
-              <i class="dot" /><span class="t">{t.raadScreen.sync}</span><span class="end"><RefreshCw /></span>
-            </button>
-            <button class="row outlined" disabled aria-disabled="true">
-              <i class="dot" /><span class="t">{t.raadScreen.enroll}</span><span class="m">{t.raadScreen.soon}</span>
-            </button>
-          </section>
-        )}
-      </div>
-      <button class="fab" aria-label={t.raadScreen.newTask} aria-expanded={sheet} onClick={() => setSheet(!sheet)}>{sheet ? <X /> : <Plus />}</button>
-    </>
+    <details class="job">
+      <summary class="lrow" style={{ '--c': done ? 'var(--ok)' : failed ? 'var(--risk)' : 'var(--accent)' }}>
+        <i class="bar" />
+        <span class="t">{t.sync}</span>
+        <span class="m">{t.jobState[j.state]} · {ago(j.updatedAt)}{j.attempt > 1 ? ` · ${t.attempts(j.attempt, j.maxAttempts)}` : ''}</span>
+        <span class="e">{done ? <Check size={18} class="ok" /> : failed ? <X size={18} class="risk" /> : null}</span>
+      </summary>
+      <ol class="steps">
+        {steps.map(s => (
+          <li class={s.status}>
+            {s.status === 'fail' ? <X /> : <Check />}
+            <span>{stepLabel(s)}</span>
+            <small>{[s.ms != null ? `${(s.ms / 1000).toFixed(1)}s` : '', s.status === 'fail' ? s.note ?? '' : ''].filter(Boolean).join(' · ')}</small>
+          </li>
+        ))}
+        {j.failure && !done && <li class="fail"><X /><span>{failureText(j.failure.kind, j.failure.message)}</span><small /></li>}
+      </ol>
+    </details>
   );
 }
 
-export function RaadJob({ id }: { id: string }) {
-  const t = strings.value;
-  const j = jobs.value.find(x => x.id === id);
-  if (!j) { navigate('/raad', { replace: true }); return null; }
+export function Raad() {
+  const t = strings.value.raad;
+  const status = raadStatus.value;
+  const home = INSTITUTION.raadHome?.[lang.value];
+  const canRun = hasCredentials.value && online.value && !activeJob.value && status !== 'paused';
+  const message = server.value?.message?.[lang.value] ?? server.value?.message?.ar;
+  const list = jobs.value.filter(j => j.type === 'sync');
+
   return (
     <>
-      <TopBar backTo="/raad" crumb={t.raadScreen.title} title={jobTitle(j)} end={<span class="pill">{t.jobState[j.state]}</span>} />
-      <div class="page">
-        {j.failure && j.state !== 'succeeded' && <Notice tone="risk">{t.failure[j.failure.kind]}</Notice>}
-        <ol class="timeline">
-          {j.steps.map(s => (
-            <li class={s.status}>
-              <span>{s.status === 'ok' ? <Check /> : s.status === 'fail' ? <X /> : '·'}</span>
-              <span>{s.label}</span>
-              <small>{[s.ms != null ? `${(s.ms / 1000).toFixed(1)}s` : '', s.note ?? ''].filter(Boolean).join(' · ')}</small>
-            </li>
-          ))}
-        </ol>
-        <p class="label"><bdi>{j.attempt}/{j.maxAttempts}</bdi> · {t.ago(minutesAgo(j.updatedAt) ?? 0)}</p>
-      </div>
+      <TopBar title={t.name} />
+      <main class="page">
+        <Card id="raad" title={t.card} index={1} tone="night" hud>
+          <div class="raad-id">
+            <RaadAvatar size={92} />
+            <div>
+              <h2>{t.name}</h2>
+              <div class="chips role">
+                <span class="chip lime">{t.role}</span>
+                <span class="chip">{t.status[status]}</span>
+              </div>
+            </div>
+          </div>
+          <p class="raad-intro">{t.intro}</p>
+          <div class="raad-meta">
+            {home && <div><small><MapPin size={11} /> {t.home}</small><b>{home}</b></div>}
+            <div><small>{t.updatedLabel}</small><b>{lastUpdated.value ? ago(lastUpdated.value) : '—'}</b></div>
+            <div><small>{t.versionLabel}</small><b class="mono">{PRODUCT.version}</b></div>
+          </div>
+          {status === 'paused' && message && <p class="alert-box"><bdi>{message}</bdi></p>}
+          <div data-noshare>
+            <RaadLine onCard showIdle />
+          </div>
+          <button class="btn primary block" data-noshare disabled={!canRun} onClick={() => void portal.sync()}><RefreshCw />{t.refresh}</button>
+        </Card>
+
+        {mode.value === 'live' && !hasCredentials.value && (
+          <Card id="raad-signin" title={t.needsYou} index={2} share={false}>
+            <LoginForm />
+          </Card>
+        )}
+
+        <Card id="raad-does" title={t.does} index={3}>
+          <ul class="creed">{t.doesList.map(x => <li><span><Check /></span><span>{x}</span></li>)}</ul>
+        </Card>
+
+        <Card id="raad-never" title={t.never} index={4}>
+          <ul class="creed never">{t.neverList.map(x => <li><span><X /></span><span>{x}</span></li>)}</ul>
+        </Card>
+
+        <Card id="raad-how" title={t.how} index={5}>
+          <ol class="flow">
+            {t.path.map((p, i) => (
+              <li class={i === 1 || i === 3 ? 'raad' : ''}>
+                <span class="n">{String(i + 1).padStart(2, '0')}</span>
+                <span><b>{p}</b><small>{t.pathNotes[i]}</small></span>
+              </li>
+            ))}
+          </ol>
+        </Card>
+
+        <Card id="raad-log" title={t.log} index={6} share={false}>
+          {list.length ? <div class="list">{list.slice(0, 12).map(j => <JobRow key={j.id} j={j} />)}</div> : <Empty>{t.logEmpty}</Empty>}
+        </Card>
+      </main>
     </>
   );
 }

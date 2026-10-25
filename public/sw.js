@@ -1,6 +1,6 @@
-// Offline support. The API is never cached here: student data lives in
-// IndexedDB, written by the app itself.
-const VERSION = 'ties-v1';
+// Offline support. Raad's API is never cached here: student data lives in
+// the device store, sealed, written by the app itself.
+const VERSION = 'taleeb-v1';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/avatars.json'];
 
 self.addEventListener('install', e => {
