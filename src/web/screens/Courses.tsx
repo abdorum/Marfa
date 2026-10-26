@@ -97,7 +97,9 @@ export function Courses() {
 export function Course({ slug }: { slug: string }) {
   const s = snapshot.value!;
   const t = strings.value;
-  const key = courseKeyFromSlug(slug);
+  // A link typed or shared in another case still finds its course.
+  const asked = courseKeyFromSlug(slug);
+  const key = s.courses.find(c => c.key.toLowerCase() === asked.toLowerCase())?.key ?? asked;
   const r = courseView(s, key, prefs.value);
   if (!r) return <><TopBar backTo="/courses" title={<bdi>{key}</bdi>} /><main class="page"><div class="card"><Empty>{t.empty}</Empty></div></main></>;
 

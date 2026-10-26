@@ -25,15 +25,18 @@
   --p-sand-400: #C9C4AC;
   --p-sand-500: #C1BBA2;
   --p-sand-600: #B5AF97;
-  --p-ink-400: #8C8776;
-  --p-ink-500: #67635A;
+  --p-ink-400: #605C50;
+  --p-ink-500: #524F48;
   --p-ink-700: #57544A;
   --p-ink-900: #3D3A32;
-  --p-slate-500: #4A5F8E;
+  --p-slate-500: #41537D;
   --p-amber-400: #D8A63C;
   --p-olive-500: #5B7A3A;
+  --p-olive-700: #41572A;
   --p-ochre-600: #93701E;
-  --p-rust-600: #A8432F;
+  --p-ochre-800: #654D15;
+  --p-rust-600: #A0402D;
+  --p-rust-800: #883626;
 
   /* ---- Semantic: day (the identity's own) ---- */
   --bg-top: #CDC8B1;
@@ -58,10 +61,10 @@
   /* The title bars, and anything chosen or current: inverted. */
   --bar: var(--p-ink-700);
   --on-bar: var(--p-sand-100);
-  --on-bar-2: rgb(228 223 202 / 72%);
+  --on-bar-2: rgb(228 223 202 / 85%);
   --night: var(--p-ink-700);
   --on-night: var(--p-sand-100);
-  --on-night-2: rgb(228 223 202 / 72%);
+  --on-night-2: rgb(228 223 202 / 85%);
 
   --brand: var(--p-ink-700);
   --accent: var(--p-slate-500);
@@ -73,6 +76,10 @@
   --ok: var(--p-olive-500);
   --warn: var(--p-ochre-600);
   --risk: var(--p-rust-600);
+  /* The same states as text: darker, so a word reads at 4.5:1 on its tint and on the paper. */
+  --ok-ink: var(--p-olive-700);
+  --warn-ink: var(--p-ochre-800);
+  --risk-ink: var(--p-rust-800);
   --ok-soft: color-mix(in srgb, var(--ok) 14%, var(--surface));
   --warn-soft: color-mix(in srgb, var(--warn) 16%, var(--surface));
   --risk-soft: color-mix(in srgb, var(--risk) 14%, var(--surface));
@@ -107,12 +114,13 @@
     --on-bg: #E2DDC8; --on-bg-2: #A9A493; --on-bg-line: rgb(226 221 200 / 20%);
     --glass: rgb(46 47 41 / 70%); --glass-strong: rgb(46 47 41 / 90%);
     --surface: #2E2F29; --surface-2: #37382F; --surface-3: #46473C;
-    --ink: #E2DDC8; --ink-2: #ADA894; --ink-3: #857F6E; --line: #4C4D42;
-    --bar: #B9B39B; --on-bar: #23241F; --on-bar-2: rgb(35 36 31 / 72%);
-    --night: #B9B39B; --on-night: #23241F; --on-night-2: rgb(35 36 31 / 72%);
+    --ink: #E2DDC8; --ink-2: #ADA894; --ink-3: #A6A193; --line: #4C4D42;
+    --bar: #B9B39B; --on-bar: #23241F; --on-bar-2: rgb(35 36 31 / 85%);
+    --night: #B9B39B; --on-night: #23241F; --on-night-2: rgb(35 36 31 / 85%);
     --accent: #93A6D3; --accent-soft: color-mix(in srgb, #93A6D3 16%, #2E2F29);
     --highlight: #E2B552; --on-highlight: #23241F;
     --ok: #91B16E; --warn: #D9B252; --risk: #E3846C;
+    --ok-ink: #9CB97D; --warn-ink: #D9B252; --risk-ink: #E89A86;
     --ok-soft: color-mix(in srgb, #91B16E 16%, #2E2F29); --warn-soft: color-mix(in srgb, #D9B252 16%, #2E2F29); --risk-soft: color-mix(in srgb, #E3846C 16%, #2E2F29);
     --dock: rgb(35 36 31 / 94%); --dock-ink: #A9A493;
     --shadow-card: 5px 5px 0 rgb(0 0 0 / 30%); --shadow-small: 3px 3px 0 rgb(0 0 0 / 28%);
@@ -125,12 +133,13 @@
   --on-bg: #E2DDC8; --on-bg-2: #A9A493; --on-bg-line: rgb(226 221 200 / 20%);
   --glass: rgb(46 47 41 / 70%); --glass-strong: rgb(46 47 41 / 90%);
   --surface: #2E2F29; --surface-2: #37382F; --surface-3: #46473C;
-  --ink: #E2DDC8; --ink-2: #ADA894; --ink-3: #857F6E; --line: #4C4D42;
-  --bar: #B9B39B; --on-bar: #23241F; --on-bar-2: rgb(35 36 31 / 72%);
-  --night: #B9B39B; --on-night: #23241F; --on-night-2: rgb(35 36 31 / 72%);
+  --ink: #E2DDC8; --ink-2: #ADA894; --ink-3: #A6A193; --line: #4C4D42;
+  --bar: #B9B39B; --on-bar: #23241F; --on-bar-2: rgb(35 36 31 / 85%);
+  --night: #B9B39B; --on-night: #23241F; --on-night-2: rgb(35 36 31 / 85%);
   --accent: #93A6D3; --accent-soft: color-mix(in srgb, #93A6D3 16%, #2E2F29);
   --highlight: #E2B552; --on-highlight: #23241F;
   --ok: #91B16E; --warn: #D9B252; --risk: #E3846C;
+    --ok-ink: #9CB97D; --warn-ink: #D9B252; --risk-ink: #E89A86;
   --ok-soft: color-mix(in srgb, #91B16E 16%, #2E2F29); --warn-soft: color-mix(in srgb, #D9B252 16%, #2E2F29); --risk-soft: color-mix(in srgb, #E3846C 16%, #2E2F29);
   --dock: rgb(35 36 31 / 94%); --dock-ink: #A9A493;
   --shadow-card: 5px 5px 0 rgb(0 0 0 / 30%); --shadow-small: 3px 3px 0 rgb(0 0 0 / 28%);

@@ -10,6 +10,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.2.1',
+    date: '2026-10-26',
+    items: {
+      ar: [
+        'نصوصٌ أوضح قراءةً في المظهرين: التسميات، والحالات، والروابط.',
+        'المحاضرة المنتهية تبقى مقروءة، بحبرٍ أخفّ بدل أن تبهت كلها.',
+        'رابط البوابة يظهر ببطاقةٍ وصورة حين تشاركه في المحادثات.',
+      ],
+      en: [
+        'Clearer text in both themes: labels, states and links.',
+        'A finished class stays readable, in a lighter ink instead of fading out.',
+        'The portal link shows a card with a picture when you share it in chats.',
+      ],
+    },
+  },
+  {
     version: '1.2.0',
     date: '2026-10-26',
     items: {

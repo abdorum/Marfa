@@ -151,6 +151,8 @@ async function route(path: string, request: Request, env: Env, ctx: ExecutionCon
   if (request.method !== 'POST') return json(405, { code: 'METHOD' });
   if (!requestAllowed(request.headers)) return json(403, { code: 'FORBIDDEN' });
   if (!/^application\/json\b/i.test(request.headers.get('Content-Type') ?? '')) return json(415, { code: 'BAD_REQUEST' });
+  // A body that says it is too big is refused before it is read.
+  if (Number(request.headers.get('Content-Length')) > MAX_BODY) return json(413, { code: 'BAD_REQUEST' });
   if (path === '/api/v1/metrics') {
     try {
       const text = await request.text();

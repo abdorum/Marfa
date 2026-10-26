@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { anonymize, leaks, secretsFor } from '../../src/dev/anonymize';
 
-const secrets = secretsFor({ userid: '2412345', nameAr: 'خالد ناصر الحربي', nameEn: 'Khalid Nasser Alharbi', email: 'khalid77@mail.com', firstName: 'خالد' });
+const secrets = secretsFor({ userid: '2412345', nameAr: 'خالد ناصر الحربي', nameEn: 'Khalid Nasser Alharbi', email: 'khalid77@example.net', firstName: 'خالد' });
 
 describe('anonymize', () => {
   it('removes names, parts of names, email and ID', () => {
     const html = `<span>خالد's Student Center</span><span>خالد ناصر الحربي</span>
-      <span>KHALID NASSER ALHARBI</span><b>Khalid</b> id=2412345 <a href="mailto:khalid77@mail.com">x</a>`;
+      <span>KHALID NASSER ALHARBI</span><b>Khalid</b> id=2412345 <a href="mailto:khalid77@example.net">x</a>`;
     const out = anonymize(html, secrets);
     expect(leaks(out, secrets)).toEqual([]);
     expect(out).toContain("أحمد's Student Center");

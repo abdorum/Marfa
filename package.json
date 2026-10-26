@@ -1,6 +1,6 @@
 {
   "name": "taleeb-portal",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Taleeb Portal (بوابة معلومات الطالب): a general, read-only student information viewer",
   "type": "module",

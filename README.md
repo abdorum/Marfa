@@ -84,5 +84,6 @@ npm run deploy:raad
 - **صورة رعد:** ضعها في `raad/identity/` باسم `avatar.png` ([التفاصيل](raad/identity/README.md)).
 - **الصور الرمزية للطلاب:** في `public/avatars/`، وتُدرج تلقائيًا عند التشغيل والبناء.
 - **الأيقونات:** عدّل الأشكال في `tools/make-icons.cjs` ثم `npm run icons`.
+- **صورة الرابط** (ما يظهر في المحادثات حين يُشارك رابط الموقع): عدّل `tools/og.html` ثم `node tools/og.mjs`، فتُكتب `public/og.png`.
 - **المؤسسة:** `src/institutions/bmc.ts`: حدّ الغياب، وطول الفصل، ومقياس المعدل…
 - **النصوص:** `src/web/i18n/ar.ts` و`en.ts`، بفصحى موجزة لا عُجمة فيها.

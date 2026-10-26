@@ -74,9 +74,9 @@ bdi, .num { font-variant-numeric: tabular-nums; }
 .label { font-size: 13px; color: var(--ink-2); }
 .muted { color: var(--ink-2); }
 .on-bg-muted { color: var(--on-bg-2); }
-.ok { color: var(--ok); }
-.warn { color: var(--warn); }
-.risk { color: var(--risk); }
+.ok { color: var(--ok-ink); }
+.warn { color: var(--warn-ink); }
+.risk { color: var(--risk-ink); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

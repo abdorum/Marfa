@@ -30,10 +30,10 @@ export function createPeopleSoftConnector(config: PsConfig): EdgeConnector {
     async health() {
       try {
         const res = await fetch(`${config.base}/psp/${config.site}/?cmd=login&languageCd=ENG&`, { headers: { 'User-Agent': config.userAgent }, redirect: 'manual' });
-        // Who refused: the sign-in page holds no personal data, so its start is safe to show.
-        const said = res.status === 200 ? undefined : (await res.text()).replace(/\s+/g, ' ').slice(0, 160);
-        const by = ['server', 'x-oracle-dms-ecid', 'x-azure-ref', 'x-cache', 'via'].filter(h => res.headers.has(h));
-        return { sis: res.status, reachable: res.status === 200, said, by };
+        // The answer is public: the status alone, never what the college's
+        // servers said or which of them answered (that is their business).
+        await res.body?.cancel();
+        return { sis: res.status, reachable: res.status === 200 };
       } catch (e) {
         return { sis: 0, reachable: false, error: (e as Error).name };
       }
