@@ -100,7 +100,8 @@ export function applyTheme(theme: Prefs['theme']) {
   if (theme === 'auto') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = theme;
   const dark = theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#1E2163' : '#6266D8');
+  // The page has one per color scheme; the chosen theme wins over both.
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', dark ? '#23241F' : '#C9C4AC'));
 }
 
 // Language and theme follow the preferences.

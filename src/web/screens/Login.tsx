@@ -8,6 +8,7 @@ import { lang, strings } from '../i18n';
 import { RaadLine } from '../raad/RaadLine';
 import { navigate } from '../router';
 import { lastJob, portal, server, setPrefs } from '../state';
+import { COURSE_COLORS } from '../colors';
 import { Link, RaadAvatar, Spinner } from '../ui';
 
 // Remembering the password is offered ready only in the installed app, which
@@ -90,11 +91,11 @@ function ArtCards() {
   return (
     <div class="stack-art" aria-hidden="true">
       <div class="card art a1">
-        <div class="art-lines"><i style={{ '--c': '#3D63FF' }} /><i style={{ '--c': '#E0508F' }} /><i style={{ '--c': '#0FA3B1' }} /></div>
+        <div class="art-lines"><i style={{ '--c': COURSE_COLORS[0] }} /><i style={{ '--c': COURSE_COLORS[2] }} /><i style={{ '--c': COURSE_COLORS[4] }} /></div>
       </div>
-      <div class="card night hud art a2">
-        <span class="chip lime"><i class="pulse" />{strings.value.now.now}</span>
-        <span class="big" style={{ color: 'var(--highlight)' }}>25</span>
+      <div class="card art a2">
+        <span class="card-head"><span class="chip lime"><i class="pulse" />{strings.value.now.now}</span></span>
+        <span class="big">25</span>
       </div>
       <div class="card art a3"><span class="art-ring"><b>21%</b></span></div>
     </div>
@@ -110,7 +111,7 @@ const ArtRaad = () => (
 
 const ArtPrivacy = () => (
   <div class="art-lock" aria-hidden="true">
-    <div class="card night hud"><Lock size={72} strokeWidth={1.5} /></div>
+    <div class="card"><Lock size={72} strokeWidth={1.25} /></div>
     <span class="chip lime"><Share2 />{strings.value.share.share}</span>
   </div>
 );

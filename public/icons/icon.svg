@@ -1,17 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6266D8"/>
-      <stop offset="1" stop-color="#3C40A6"/>
+      <stop offset="0" stop-color="#D2CDB6"/>
+      <stop offset="1" stop-color="#BFB9A0"/>
     </linearGradient>
-    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-      <path d="M32 0H0V32" fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="2"/>
+    <pattern id="scan" width="6" height="6" patternUnits="userSpaceOnUse">
+      <path d="M0 .5H6" stroke="#3D3A32" stroke-opacity=".06"/>
     </pattern>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <rect width="512" height="512" rx="112" fill="url(#grid)"/>
-  <path d="M128 224a128 128 0 0 1 256 0v164a28 28 0 0 1-28 28H156a28 28 0 0 1-28-28Z" fill="#fff"/>
-  <path d="M172 234a84 84 0 0 1 168 0v182H172Z" fill="#12143B"/>
-  <rect x="206" y="318" width="100" height="64" rx="14" fill="#D7F25E"/>
-  <circle cx="256" cy="232" r="12" fill="#3D63FF"/>
+  <rect width="512" height="512" rx="112" fill="url(#scan)"/>
+  <path d="M128 224a128 128 0 0 1 256 0v186a6 6 0 0 1-6 6H134a6 6 0 0 1-6-6Z" fill="#57544A"/>
+  <path d="M172 234a84 84 0 0 1 168 0v182H172Z" fill="#DAD5BF"/>
+  <rect x="196" y="296" width="120" height="22" fill="#57544A"/>
+  <rect x="196" y="334" width="120" height="9" fill="#8C8776"/>
+  <rect x="196" y="356" width="78" height="9" fill="#8C8776"/>
+  <rect x="244" y="212" width="24" height="24" fill="#D8A63C"/>
 </svg>

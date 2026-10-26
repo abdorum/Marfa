@@ -157,11 +157,13 @@ export function Dock() {
   );
   return (
     <nav class="dock" aria-label={strings.value.appName}>
-      {item('home', '/', <House />)}
-      {item('schedule', '/schedule', <CalendarDays />)}
-      {item('raad', '/raad', <RaadAvatar size={46} />, 'raad')}
-      {item('courses', '/courses', <BookOpen />)}
-      {item('me', '/me', <User />)}
+      <div class="dock-in">
+        {item('home', '/', <House />)}
+        {item('schedule', '/schedule', <CalendarDays />)}
+        {item('raad', '/raad', <RaadAvatar size={28} />, 'raad')}
+        {item('courses', '/courses', <BookOpen />)}
+        {item('me', '/me', <User />)}
+      </div>
     </nav>
   );
 }

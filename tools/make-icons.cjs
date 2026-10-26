@@ -6,13 +6,15 @@ const zlib = require('zlib');
 
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 // [x, y, w, h, [top-left, top-right, bottom-right, bottom-left radius], color] on a 512 grid, painted in order.
-// The gate (بوابة) with a card in its doorway: the product's mark.
+// The gate (بوابة) with a card in its doorway, and a lit square above it: the product's mark.
 const SHAPES = [
-  [0, 0, 512, 512, [112, 112, 112, 112], ['#6266D8', '#3C40A6']],
-  [128, 96, 256, 320, [128, 128, 28, 28], '#FFFFFF'],
-  [172, 150, 168, 266, [84, 84, 0, 0], '#12143B'],
-  [206, 318, 100, 64, [14, 14, 14, 14], '#D7F25E'],
-  [244, 220, 24, 24, [12, 12, 12, 12], '#3D63FF'],
+  [0, 0, 512, 512, [112, 112, 112, 112], ['#D2CDB6', '#BFB9A0']],
+  [128, 96, 256, 320, [128, 128, 6, 6], '#57544A'],
+  [172, 150, 168, 266, [84, 84, 0, 0], '#DAD5BF'],
+  [196, 296, 120, 22, [0, 0, 0, 0], '#57544A'],
+  [196, 334, 120, 9, [0, 0, 0, 0], '#8C8776'],
+  [196, 356, 78, 9, [0, 0, 0, 0], '#8C8776'],
+  [244, 212, 24, 24, [0, 0, 0, 0], '#D8A63C'],
 ];
 
 function inside(X, Y, x, y, w, h, [tl, tr, br, bl]) {

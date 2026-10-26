@@ -10,6 +10,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.2.0',
+    date: '2026-10-26',
+    items: {
+      ar: [
+        'هويةٌ جديدة: الطرفية الرملية. ألواحٌ هادئة على الرمل، لا سواد فيها.',
+        'لكل مادةٍ لونٌ واضح في الجدول والغياب والتنبيهات، فتعرفها بنظرة.',
+        'المحاضرة الجارية منقلبةٌ داكنة بسهمٍ بجانبها، والعدّ التنازلي على قرص ساعة.',
+        'وضعٌ ليليٌّ جديد من الإعدادات: فحمٌ زيتونيٌّ مريح.',
+      ],
+      en: [
+        'A new look: the sand terminal. Quiet panels on sand, nothing black.',
+        'Each course has a clear color in the schedule, absences and alerts, so you know it at a glance.',
+        'The class in progress is inverted with a pointer beside it, and the countdown sits on a dial.',
+        'A new night theme in Settings: a restful charcoal olive.',
+      ],
+    },
+  },
+  {
     version: '1.1.0',
     date: '2026-10-26',
     items: {

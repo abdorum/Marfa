@@ -41,6 +41,7 @@ export function Home() {
           </div>
           <Link href="/me" aria-label={t.tabs.me}><Avatar /></Link>
         </div>
+        <div class="dots-rule" aria-hidden="true" />
         <div class="hello-chips">
           <button class={`chip ${old ? 'lime' : 'glass'}`} onClick={refresh} disabled={busy} aria-label={t.refresh}>
             <RefreshCw class={busy ? 'spin-icon' : ''} />

@@ -24,14 +24,41 @@ type CardFn = (p: { index: number }) => JSX.Element | null;
 
 // ---------- Now and next ----------
 
+/** A clock face: the lit arc is the minutes counted down, up to an hour. */
+function Dial({ min }: { min?: number }) {
+  const ticks = Array.from({ length: 60 }, (_, i) => {
+    const a = (i * Math.PI) / 30;
+    const l = i % 5 ? 4 : 9;
+    return <line x1={60 + 52 * Math.sin(a)} y1={60 - 52 * Math.cos(a)} x2={60 + (52 - l) * Math.sin(a)} y2={60 - (52 - l) * Math.cos(a)} stroke="currentColor" stroke-width={i % 5 ? 0.8 : 1.4} />;
+  });
+  const v = min == null ? 0 : Math.min(1, min / 60);
+  const end = 2 * Math.PI * v;
+  const arc = v >= 1
+    ? <circle cx="60" cy="60" r="34" fill="none" stroke="var(--highlight)" stroke-width="7" />
+    : v > 0 && <path d={`M60 26A34 34 0 ${v > 0.5 ? 1 : 0} 1 ${60 + 34 * Math.sin(end)} ${60 - 34 * Math.cos(end)}`} fill="none" stroke="var(--highlight)" stroke-width="7" />;
+  return (
+    <svg class="dial" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="1" />
+      {ticks}
+      <circle cx="60" cy="60" r="34" fill="none" stroke="currentColor" stroke-width=".8" stroke-dasharray="2 3" />
+      {arc}
+      <path d={`M60 60L${60 + 40 * Math.sin(end)} ${60 - 40 * Math.cos(end)}`} stroke="currentColor" stroke-width="2" />
+      <circle cx="60" cy="60" r="3.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 function Countdown({ min }: { min: number }) {
   const t = strings.value.now;
   const hours = min >= 60;
   const n = hours ? Math.floor(min / 60) : Math.max(1, min);
   return (
     <div class="nn-count" aria-hidden="true">
-      <span class="big">{hours ? `${n}:${String(min % 60).padStart(2, '0')}` : n}</span>
-      <small>{t.unit(n, hours)}</small>
+      <Dial min={min} />
+      <span class="num">
+        <span class="big">{hours ? `${n}:${String(min % 60).padStart(2, '0')}` : n}</span>
+        <small>{t.unit(n, hours)}</small>
+      </span>
     </div>
   );
 }
@@ -39,8 +66,11 @@ function Countdown({ min }: { min: number }) {
 function DayBox({ date }: { date: Date }) {
   return (
     <div class="nn-count" aria-hidden="true">
-      <span class="big">{date.getDate()}</span>
-      <small>{dayName(date.getDay())}</small>
+      <Dial />
+      <span class="num">
+        <span class="big">{date.getDate()}</span>
+        <small>{dayName(date.getDay())}</small>
+      </span>
     </div>
   );
 }
