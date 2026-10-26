@@ -1,7 +1,7 @@
 // One extractor per allowlisted page. Output stays close to the page; turning
 // it into the canonical model is map.ts's job. Field ids are documented in
 // Docs/10-peoplesoft-notes.md.
-import { cellsOf, clean, lines, num, parseDays, rows, text, toMinutes, usDateToIso } from './dom';
+import { cellsOf, clean, landmark, lines, num, parseDays, rows, text, toMinutes, usDateToIso } from './dom';
 
 export interface CenterPage {
   firstName: string;
@@ -21,6 +21,7 @@ export interface CenterPage {
 }
 
 export function extractCenter(doc: Document): CenterPage {
+  landmark(doc, 'center', ['DERIVED_SSS_SCL_TITLE1$78$']);
   const classes = rows(doc, i => `CLASS_NAME$span$${i}`).map(i => {
     const [nameLine = '', compLine = ''] = lines(doc, `CLASS_NAME$span$${i}`);
     const dash = nameLine.lastIndexOf('-');
@@ -75,6 +76,7 @@ export interface GradesPage {
 }
 
 export function extractGrades(doc: Document): GradesPage {
+  landmark(doc, 'grades', ['DERIVED_REGFRM1_SSR_STDNTKEY_DESCR$11$', 'DERIVED_SSTSNAV_PERSON_NAME']);
   const classes = rows(doc, i => `CLS_LINK$${i}`).map(i => ({
     course: text(doc, `CLS_LINK$${i}`),
     title: text(doc, `CLASS_TBL_VW_DESCR$${i}`),
@@ -106,6 +108,7 @@ export interface AttendancePage {
 }
 
 export function extractAttendance(doc: Document): AttendancePage {
+  landmark(doc, 'attendance', ['LS_SS_PERS_SRCH_NAME_DISPLAY', 'A_SF_ATT_DER_TERM_BEGIN_DT']);
   const grid = (prefix: string, scope: 'semester' | 'year') => rows(doc, i => `${prefix}_SUBJECT$${i}`)
     .map(i => ({
       scope,
@@ -137,6 +140,7 @@ export function extractExams(doc: Document): ExamsPage {
   // PeopleSoft nests layout tables: find the row whose own cells are the headings.
   const headRow = Array.from(doc.querySelectorAll('tr'))
     .find(tr => cellsOf(tr).some(c => /^Exam Date/i.test(clean(c.textContent))));
+  if (!headRow) landmark(doc, 'exams', ['DERIVED_REGFRM1_SSR_STDNTKEY_DESCR$11$'], /exam schedule is not available/i);
   if (headRow) {
     const heads = cellsOf(headRow).map(c => clean(c.textContent));
     const col = (re: RegExp) => heads.findIndex(h => re.test(h));

@@ -249,7 +249,10 @@ a.stat:active { filter: brightness(.97); }
 }
 .field input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 .check { display: flex; align-items: center; gap: 10px; font-size: 14.5px; color: var(--ink); }
-.check input { inline-size: 20px; block-size: 20px; accent-color: var(--accent); }
+.check input { inline-size: 20px; block-size: 20px; accent-color: var(--accent); flex: none; }
+.check.consent { align-items: flex-start; font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+.check.consent input { margin-block-start: 3px; }
+.check.consent a { text-decoration: underline; text-underline-offset: 3px; }
 .toggle {
   appearance: none; -webkit-appearance: none; flex: none;
   inline-size: 46px; block-size: 28px; border-radius: 14px;

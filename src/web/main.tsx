@@ -63,6 +63,20 @@ void start().then(() => {
   if (!prefs.value.lastSeenVersion) void setPrefs({ lastSeenVersion: PRODUCT.version });
 });
 
+// After an update, an open tab may ask for a file the new version no longer has
+// (the share library, loaded on demand). Reloading brings the new version.
+// Once per tab, so a file that is truly gone cannot reload it forever.
+addEventListener('vite:preloadError', e => {
+  try {
+    if (sessionStorage.getItem('reloaded-for-update')) return;
+    sessionStorage.setItem('reloaded-for-update', '1');
+  } catch {
+    return;
+  }
+  e.preventDefault();
+  location.reload();
+});
+
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }

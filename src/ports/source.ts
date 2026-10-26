@@ -1,7 +1,7 @@
 // The contract every data source implements (Docs/20-adapters.md). The app
 // talks to this interface only, so a source can be swapped for another (a
 // file, an official API) without touching a single card.
-import type { AttemptContext } from '../../raad/engine/types';
+import type { AttemptContext } from '../core/attempt';
 import type { DataArea, SourceId, SyncResult } from '../core/model';
 
 /** Risk tier (Docs/20): A files, B official APIs, C a bridge the institution hosts, D reading pages with the student's password. */
@@ -27,6 +27,8 @@ export interface Credentials {
 
 export interface SourceContext extends AttemptContext {
   credentials?: Credentials;
+  /** The areas worth reading now; undefined means all. A source may read more, never less. */
+  areas?: readonly DataArea[];
 }
 
 export interface StudentDataSource {

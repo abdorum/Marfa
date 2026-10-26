@@ -1,7 +1,8 @@
 // Merging sync results into the stored snapshot. An area that synced replaces
 // its fields completely; an area that failed keeps its old data and is marked
-// stale, so a partial failure never erases anything. A term the source moved
-// on from goes to the archive, and what changed is remembered.
+// stale, so a partial failure never erases anything. An area that comes back
+// empty when it had rows this term is doubted, not believed (see `doubtful`).
+// A term the source moved on from goes to the archive, and what changed is remembered.
 import { diffSnapshots, keepChanges } from './derive/changes';
 import { currentTerm } from './derive/schedule';
 import {
@@ -17,8 +18,9 @@ export function mergeSnapshot(prev: Snapshot | undefined, result: SyncResult, so
   const next: Snapshot = { ...base, provenance: { ...base.provenance } };
 
   for (const key of DATA_AREAS) {
-    const p = result.provenance[key];
+    let p = result.provenance[key];
     if (!p) continue;
+    if (p.status === 'fresh' && doubtful(base, result, key)) p = { status: 'error', error: 'PARSE' };
     if (p.status === 'fresh') {
       if (key === 'extras') next.extras = mergeExtras(base.extras, result.data.extras ?? [], result.fetchedAt);
       else if (key === 'student') next.student = mergeStudent(base.student, result.data.student);
@@ -46,6 +48,25 @@ export function mergeSnapshot(prev: Snapshot | undefined, result: SyncResult, so
     next.changes = keepChanges(diffSnapshots(base, next, result.fetchedAt), base.changes, result.fetchedAt);
   }
   return next;
+}
+
+/** Areas whose rows do not all vanish within a term: an empty answer for them is doubted. */
+const DOUBT_EMPTY: Partial<Record<DataArea, 'sections' | 'attendance' | 'grades'>> = { schedule: 'sections', attendance: 'attendance', grades: 'grades' };
+
+/**
+ * A schedule, attendance or grades that were full this term and come back
+ * empty more likely mean a page the source changed than a term with no
+ * classes. Believing it would tell the student every class was removed, so
+ * the old rows stay, marked stale, until the area comes back with rows or the
+ * term changes.
+ */
+function doubtful(base: Snapshot, result: SyncResult, key: DataArea): boolean {
+  const field = DOUBT_EMPTY[key];
+  if (!field || result.data[field]?.length) return false;
+  const had: { termCode: string }[] = base[field];
+  if (!had.length) return false;
+  const term = result.data.terms?.find(t => t.current)?.code;
+  return !term || had.some(r => r.termCode === term);
 }
 
 /** A snapshot saved by an older version, brought up to this one; undefined if unknown. */

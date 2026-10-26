@@ -20,6 +20,10 @@ export function anonymize(html: string, secrets: Secret[]): string {
     out = out.replace(new RegExp(`(?<![\\p{L}\\p{N}])${escape(value.trim())}(?![\\p{L}\\p{N}])`, 'giu'), replacement);
   }
   return out
+    // PeopleSoft notes its own servers in every page (version, database,
+    // internal addresses): the college's business, never a fixture's.
+    .replace(/<!--[^>]*\b(AppServ|ToolsRel|DB)=[\s\S]*?-->\s*/gi, '')
+    .replace(/<div\b[^>]*\bid=['"]?pt_envinfo[^>]*>[\s\S]*?<\/div>\s*/gi, '')
     .replace(/(name=['"]?ICSID['"]?[^>]*value=['"])[^'"]*/gi, '$1REDACTED')
     .replace(/(name=['"]?ICStateNum['"]?[^>]*value=['"])[^'"]*/gi, '$11')
     .replace(/(name=['"]?lcsrf_token['"]?[^>]*value=['"])[^'"]*/gi, '$1REDACTED');

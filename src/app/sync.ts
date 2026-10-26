@@ -1,8 +1,8 @@
-// The sync job: Raad reads everything from the source, then the result is
+// The sync job: Raad reads from the source what is due, then the result is
 // merged with what the device already has, compared with it, and sealed back.
 // Credentials live in the closure only — never in the job, which is saved.
 import type { JobRunner } from '../../raad/engine/types';
-import type { Snapshot } from '../core/model';
+import type { DataArea, Snapshot } from '../core/model';
 import { mergeSnapshot } from '../core/snapshot';
 import type { Credentials, StudentDataSource } from '../ports/source';
 
@@ -16,6 +16,8 @@ export interface SyncSummary {
 export interface SyncRunnerDeps {
   source: StudentDataSource;
   credentials?: Credentials;
+  /** The areas to read; undefined reads everything. */
+  areas?: readonly DataArea[];
   current(): Snapshot | undefined;
   save(next: Snapshot): Promise<void>;
 }
@@ -23,10 +25,12 @@ export interface SyncRunnerDeps {
 export function syncRunner(d: SyncRunnerDeps): JobRunner<Record<string, never>, SyncSummary> {
   return {
     type: 'sync',
-    maxAttempts: 5,
-    timeoutMs: 90_000,
+    // Each attempt may sign in to the college: three at most, so a struggling
+    // college is not asked again and again.
+    maxAttempts: 3,
+    timeoutMs: 120_000,
     async attempt(_params, ctx) {
-      const result = await d.source.sync({ ...ctx, credentials: d.credentials });
+      const result = await d.source.sync({ ...ctx, credentials: d.credentials, areas: d.areas });
       const before = d.current();
       let t0 = Date.now();
       ctx.step('merge', 'start');

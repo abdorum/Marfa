@@ -74,6 +74,10 @@ npm run deploy:raad
 | `RAAD_PAUSED` = `1` | يوقف كل تحديث، ويرى الطلاب أن رعدًا موقوف |
 | `RAAD_MESSAGE_AR` / `RAAD_MESSAGE_EN` | سبب الإيقاف |
 | `NOTICE_AR` / `NOTICE_EN` | إعلانٌ يظهر بطاقةً لكل الطلاب. احذف المتغير لإخفائه |
+| `RAAD_DISABLE_PAGES` | أجزاءٌ لا تُقرأ (`attendance`…)، إن صارت صفحةٌ تقطع الجلسات |
+| `RAAD_STALE_MINUTES` | كم تبقى البيانات قبل أن تحدّثها الأجهزة بنفسها، لأسابيع الاختبارات |
+
+وسرٌّ واحد، `ID_KEY`، **بدونه يرفض رعدٌ كل تحديث** (`npx wrangler secret put ID_KEY -c raad/wrangler.toml`). وما يُصنع ساعة الشدّة في [RUNBOOK.md](RUNBOOK.md).
 
 ## إعدادات
 

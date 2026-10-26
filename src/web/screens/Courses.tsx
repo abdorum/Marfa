@@ -54,8 +54,8 @@ function CourseCard({ r, index, detail }: { r: CourseRow; index?: number; detail
           {budget && (
             <>
               <Chevrons used={budget.used} allowed={budget.allowed} level={level} />
-              <p class="label">{t.attendance.left(budget.left)}</p>
-              {detail && <p class="label">{t.attendance.estimate(budget.total, budget.allowed)}</p>}
+              <p class="label">{t.attendance.left(budget.left, budget.leftAtMost)}</p>
+              {detail && <p class="label">{t.attendance.estimate(budget.total, budget.allowed, budget.endKnown)}</p>}
             </>
           )}
         </div>

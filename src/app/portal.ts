@@ -8,11 +8,12 @@
 import { createJob, isTerminal, runJob, type EngineDeps } from '../../raad/engine/engine';
 import type { FailureKind, Job } from '../../raad/engine/types';
 import type { InstitutionProfile } from '../core/institution';
-import type { Snapshot, SyncResult } from '../core/model';
+import type { DataArea, Snapshot, SyncResult } from '../core/model';
 import { lastFetched, mergeSnapshot, migrateSnapshot } from '../core/snapshot';
 import type { RaadServer, ServerStatus } from '../ports/raad';
 import type { Credentials, StudentDataSource } from '../ports/source';
 import type { KeyValueStore, Sealed, Sealer } from '../ports/storage';
+import { dueAreas } from './freshness';
 import { syncRunner, type SyncSummary } from './sync';
 
 /** live: the institution's own source. demo: made-up data, never mixed with live data. */
@@ -38,7 +39,9 @@ export interface Prefs {
 }
 
 export type SyncJob = Job<Record<string, never>, SyncSummary>;
-export type SignInFailure = FailureKind | 'LOCKED';
+/** Why a sign-in failed: a failure kind, or one of the reasons the student must read as such. */
+export type SignInFailure = FailureKind | 'LOCKED' | 'ACCOUNT' | 'COOLDOWN';
+const TOLD_APART: readonly string[] = ['LOCKED', 'ACCOUNT', 'COOLDOWN'];
 
 export interface PortalState {
   ready: boolean;
@@ -73,7 +76,9 @@ export interface Portal {
   startDemo(): Promise<void>;
   exitDemo(): Promise<void>;
   signOut(): Promise<void>;
+  /** Reads everything now, as the student asked. */
   sync(): Promise<SyncJob>;
+  /** Reads what is due, after a short random pause; nothing if nothing is due. */
   refreshIfStale(): void;
   setPrefs(patch: Partial<Prefs>): Promise<void>;
   checkServer(force?: boolean): Promise<void>;
@@ -84,6 +89,10 @@ const KEYS = { prefs: 'prefs', mode: 'mode', jobs: 'raad:jobs', credentials: 'cr
 const snapshotKey = (m: Mode) => (m === 'demo' ? 'demo:snapshot' : 'snapshot');
 const STALE_MS = 15 * 60 * 1000;
 const SERVER_CHECK_MS = 5 * 60 * 1000;
+/** After a sync that failed on its own, the app waits this long before trying again by itself. */
+const AFTER_FAILURE_MS = 10 * 60 * 1000;
+/** A refresh on opening waits up to this long, so students opening at the same minute are spread apart. */
+const OPEN_SPREAD_MS = 8000;
 const MAX_JOBS = 30;
 
 export const defaultPrefs = (i: InstitutionProfile): Prefs =>
@@ -104,7 +113,10 @@ export function createPortal(d: PortalDeps): Portal {
     for (const l of listeners) l(state);
   };
 
-  const openSnapshot = async (m: Mode) => migrateSnapshot(await d.sealer.open(await d.store.get<Sealed>(snapshotKey(m))));
+  /** A read that may fail (storage trouble) without stopping the app; the data then shows as missing. */
+  const read = <T>(p: Promise<T>) => p.catch(() => undefined);
+  const openSnapshot = (m: Mode) => read((async () => migrateSnapshot(await d.sealer.open(await d.store.get<Sealed>(snapshotKey(m)))))());
+  const openCredentials = () => read((async () => d.sealer.open<Credentials>(await d.store.get<Sealed>(KEYS.credentials)))());
 
   const saveSnapshot = async (m: Mode, s: Snapshot) => {
     if (state.mode === m) set({ snapshot: s });
@@ -118,16 +130,27 @@ export function createPortal(d: PortalDeps): Portal {
     persistTimer = setTimeout(() => void d.store.set(KEYS.jobs, state.jobs), 300);
   };
 
-  const sync = (): Promise<SyncJob> => {
+  /**
+   * A password the college refused is forgotten at once: kept, it would be
+   * sent again at every opening, and could lock the student's real account.
+   */
+  const forgetCredentials = async () => {
+    credentials = undefined;
+    set({ hasCredentials: false });
+    await d.store.del(KEYS.credentials);
+  };
+
+  const sync = (areas?: readonly DataArea[]): Promise<SyncJob> => {
     const mode = state.mode;
     if (!mode) return Promise.reject(new Error('no mode'));
     running ??= (async () => {
       const source = d.sourceFor(mode);
-      const runner = syncRunner({ source, credentials: mode === 'live' ? credentials : undefined, current: () => state.snapshot, save: s => saveSnapshot(mode, s) });
+      const runner = syncRunner({ source, credentials: mode === 'live' ? credentials : undefined, areas, current: () => state.snapshot, save: s => saveSnapshot(mode, s) });
       const deps: EngineDeps = { ...d.engine, save: j => putJob(j as SyncJob) };
       const started = now().getTime();
       const job = await runJob(createJob(runner, {}, deps), runner, deps);
       putJob(job);
+      if (job.state === 'needs_input' && mode === 'live') await forgetCredentials();
       if (state.prefs.metrics && mode === 'live') d.metrics?.(job, now().getTime() - started);
       if (job.failure?.kind === 'PAUSED') void checkServer(true);
       return job;
@@ -135,10 +158,30 @@ export function createPortal(d: PortalDeps): Portal {
     return running;
   };
 
+  const staleMs = () => (state.server?.staleMinutes ?? 0) * 60_000 || STALE_MS;
+
+  /** The app may refresh on its own: signed in, online, Raad working, and no failure just now. */
+  const mayRefresh = () => {
+    if (!state.mode || !state.hasCredentials || running || !state.online || state.server?.paused) return false;
+    const last = state.jobs[0];
+    return !(last?.state === 'failed' && now().getTime() - Date.parse(last.updatedAt) < AFTER_FAILURE_MS);
+  };
+
+  let spreading = false;
   const refreshIfStale = () => {
-    if (!state.mode || !state.hasCredentials || running || !state.online || state.server?.paused) return;
-    const at = lastFetched(state.snapshot);
-    if (!at || now().getTime() - Date.parse(at) > STALE_MS) void sync();
+    if (spreading || !mayRefresh()) return;
+    if (!lastFetched(state.snapshot)) {
+      void sync();
+      return;
+    }
+    if (!dueAreas(state.snapshot, now().getTime(), staleMs()).length) return;
+    spreading = true;
+    void d.engine.sleep(Math.round(d.engine.random() * OPEN_SPREAD_MS), new AbortController().signal)
+      .then(() => {
+        const due = dueAreas(state.snapshot, now().getTime(), staleMs());
+        if (due.length && mayRefresh()) void sync(due);
+      })
+      .finally(() => { spreading = false; });
   };
 
   const checkServer = async (force = false) => {
@@ -164,11 +207,11 @@ export function createPortal(d: PortalDeps): Portal {
     },
 
     async init(opts = {}) {
-      const [p, m, j] = await Promise.all([d.store.get<Partial<Prefs>>(KEYS.prefs), d.store.get<Mode>(KEYS.mode), d.store.get<SyncJob[]>(KEYS.jobs)]);
+      const [p, m, j] = await Promise.all([read(d.store.get<Partial<Prefs>>(KEYS.prefs)), read(d.store.get<Mode>(KEYS.mode)), read(d.store.get<SyncJob[]>(KEYS.jobs))]);
       storedMode = m === 'live' || m === 'demo' ? m : undefined;
       const mode = opts.demo ? 'demo' : storedMode;
       const snapshot = mode ? await openSnapshot(mode) : undefined;
-      if (mode === 'live') credentials = await d.sealer.open<Credentials>(await d.store.get<Sealed>(KEYS.credentials));
+      if (mode === 'live') credentials = await openCredentials();
       set({
         ready: true,
         prefs: { ...defaultPrefs(d.institution), ...p },
@@ -197,7 +240,8 @@ export function createPortal(d: PortalDeps): Portal {
       if (job.state !== 'succeeded') {
         credentials = undefined;
         set(keep ? { hasCredentials: false } : { mode: storedMode === 'live' ? 'live' : undefined, hasCredentials: false });
-        return job.failure?.message === 'LOCKED' ? 'LOCKED' : job.failure?.kind ?? 'UNEXPECTED';
+        const message = job.failure?.message ?? '';
+        return TOLD_APART.includes(message) ? message as SignInFailure : job.failure?.kind ?? 'UNEXPECTED';
       }
       storedMode = 'live';
       await d.store.set(KEYS.mode, 'live');
@@ -215,7 +259,7 @@ export function createPortal(d: PortalDeps): Portal {
     async exitDemo() {
       await d.store.del(snapshotKey('demo'));
       if (storedMode === 'live') {
-        credentials ??= await d.sealer.open<Credentials>(await d.store.get<Sealed>(KEYS.credentials));
+        credentials ??= await openCredentials();
         set({ mode: 'live', snapshot: await openSnapshot('live'), hasCredentials: !!credentials });
       } else {
         storedMode = undefined;
@@ -235,7 +279,7 @@ export function createPortal(d: PortalDeps): Portal {
       await d.store.set(KEYS.prefs, prefs);
     },
 
-    sync,
+    sync: () => sync(),
     refreshIfStale,
     checkServer,
 

@@ -9,7 +9,14 @@ export function createRaadServer(endpoint = '/api/v1/status'): RaadServer {
         const res = await fetch(endpoint, { cache: 'no-store' });
         if (!res.ok) return undefined;
         const body = (await res.json()) as Partial<ServerStatus>;
-        return { paused: !!body.paused, message: body.message, notice: body.notice };
+        return {
+          paused: !!body.paused,
+          auto: body.auto === true || undefined,
+          until: typeof body.until === 'string' ? body.until : undefined,
+          message: body.message,
+          notice: body.notice,
+          staleMinutes: typeof body.staleMinutes === 'number' ? body.staleMinutes : undefined,
+        };
       } catch {
         return undefined;
       }

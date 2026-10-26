@@ -1,6 +1,9 @@
 // The device store: a minimal IndexedDB key-value store. Falls back to memory
 // when IndexedDB is unavailable (private mode), so the app still works for
-// the session.
+// the session. When IndexedDB is there but a read or write fails, the call
+// fails too: "missing" and "could not read" must never look alike, or the
+// sealer would take a failed read of its key for no key and make a new one,
+// losing everything sealed under the old (src/adapters/browser/sealer.ts).
 import type { KeyValueStore } from '../../ports/storage';
 
 const STORE = 'kv';
@@ -21,14 +24,14 @@ export function createDeviceStore(name = 'taleeb'): KeyValueStore {
   }));
 
   const tx = <T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>): Promise<T | undefined> =>
-    open().then(db => new Promise(resolve => {
+    open().then(db => new Promise((resolve, reject) => {
       if (!db) return resolve(undefined);
       try {
         const req = run(db.transaction(STORE, mode).objectStore(STORE));
         req.onsuccess = () => resolve(req.result);
-        req.onerror = () => resolve(undefined);
-      } catch {
-        resolve(undefined);
+        req.onerror = () => reject(req.error ?? new Error('IndexedDB'));
+      } catch (e) {
+        reject(e);
       }
     }));
 

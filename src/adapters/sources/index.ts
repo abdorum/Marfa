@@ -6,6 +6,7 @@ import type { AdapterManifest, StudentDataSource } from '../../ports/source';
 import { createDemoSource, DEMO_MANIFEST } from './demo/source';
 import { OFFICIAL_MANIFEST } from './official/source';
 import { createPeopleSoftSource, PEOPLESOFT_MANIFEST, type PeopleSoftSourceOptions } from './peoplesoft/client';
+import { PAGE_KEYS } from './peoplesoft/pages';
 
 export interface SourceOptions {
   institution: InstitutionProfile;
@@ -16,7 +17,11 @@ export interface SourceOptions {
 export const MANIFESTS: readonly AdapterManifest[] = [PEOPLESOFT_MANIFEST, OFFICIAL_MANIFEST, DEMO_MANIFEST];
 
 const FACTORIES: Record<string, (o: SourceOptions) => StudentDataSource> = {
-  peoplesoft: o => createPeopleSoftSource({ institution: o.institution.name.en, onRaw: o.onRaw }),
+  peoplesoft: o => createPeopleSoftSource({
+    institution: o.institution.name.en,
+    pages: PAGE_KEYS.filter(k => o.institution.peoplesoft?.pages.includes(k) ?? true),
+    onRaw: o.onRaw,
+  }),
   demo: () => createDemoSource(),
 };
 

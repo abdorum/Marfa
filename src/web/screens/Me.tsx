@@ -79,7 +79,7 @@ export function Me() {
               <dt>{t.me.id}</dt><dd><bdi data-private>{st?.id ?? '—'}</bdi></dd>
               {st?.email && <><dt>{t.me.email}</dt><dd><bdi data-private>{st.email}</bdi></dd></>}
               {st?.phone && <><dt>{t.me.phone}</dt><dd><bdi data-private>{st.phone}</bdi></dd></>}
-              <dt>{t.me.advisor}</dt><dd class="text"><bdi>{st?.advisor ?? '—'}</bdi></dd>
+              <dt>{t.me.advisor}</dt><dd class="text"><bdi data-private>{st?.advisor ?? '—'}</bdi></dd>
             </dl>
             <div class="strip" aria-hidden="true">{Array.from({ length: 28 }, (_, i) => <i style={{ blockSize: `${30 + ((i * 37) % 70)}%` }} />)}</div>
           </div>

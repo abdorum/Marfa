@@ -3,7 +3,7 @@
 // worse than none. Update UPDATED with any change.
 import type { Lang } from './index';
 
-export const UPDATED = '2026-10-25';
+export const UPDATED = '2026-10-26';
 
 export interface LegalDoc {
   title: string;
@@ -19,6 +19,7 @@ const privacyAr: LegalDoc = {
       p: [
         'الرقم الجامعي وكلمة المرور، لتسجيل دخولك في نظام الكلية فحسب.',
         'بياناتك كما يعرضها لك نظام الكلية: الاسم، والبريد، والهاتف، والمرشد، والجدول، والحضور، والدرجات، والاختبارات، والتنبيهات.',
+        'وتعرض صفحات الكلية اسم مرشدك، وهو بيان شخصٍ غيرك: يبقى على جهازك كسائر بياناتك، ويُخفى من البطاقات المشاركة، ولا نستعمله في شيء.',
       ],
     },
     {
@@ -33,7 +34,9 @@ const privacyAr: LegalDoc = {
       h: 'ما يُحفظ على الخادم',
       p: [
         'لا تُحفظ كلمة مرورك ولا بياناتك على أي خادم، ولا تُكتب في أي سجلّ.',
-        'عند إدخال كلمة مرورٍ خاطئة فقط: تُحفظ بصمةٌ مشفّرة (SHA-256) لرقمك الجامعي مع عدد المحاولات، لإيقاف التخمين وحماية حسابك من القفل. وتُحذف تلقائيًا بعد 15 دقيقة، أو عند أول دخولٍ صحيح.',
+        'عند إدخال كلمة مرورٍ خاطئة فقط: يُحفظ عدد المحاولات تحت معرّفٍ مستعارٍ لرقمك الجامعي، يُصنع بمفتاحٍ سرّيٍّ لا يملكه إلا خادم رعد، فلا يُستخرج منه رقمك. وذلك لإيقاف التخمين وحماية حسابك من القفل، ويُحذف تلقائيًا بعد 15 دقيقة، أو عند أول دخولٍ صحيح.',
+        'ولكل تحديثٍ يُحصي الخادم نتيجته بلا هوية: رمز النتيجة، ورموز ما تعذّر من الأجزاء، ومدته مقرّبة. لا رقم جامعيًّا فيه، ولا عنوان IP، ولا معرّفًا مستعارًا؛ وغايته أن نعلم بعطل رعد قبل أن تخبرنا به. ويُحذف بعد 3 أشهر.',
+        'ولا يحفظ الخادم سجلًّا لما يمرّ به: لا الطلبات، ولا الردود، ولا رسائل الأخطاء.',
         'وعند فتح التطبيق يسأل خادمَ رعد: هل هو موقوف؟ وهل من إعلان؟ ولا يحمل هذا السؤال شيئًا من بياناتك.',
         'وقد يعالج مزوّد الاستضافة Cloudflare عنوان IP لأغراضٍ تشغيلية وأمنية، ومنها تحديد عدد الطلبات من كل عنوان.',
       ],
@@ -56,17 +59,23 @@ const privacyAr: LegalDoc = {
       ],
     },
     {
-      h: 'الإحصاءات المجهولة',
-      p: ['معطّلةٌ افتراضيًا. إن فعّلتها من الإعدادات: نتيجة كل تحديث، وعدد محاولاته، ومدته، ورقم الإصدار. بلا رقمٍ جامعيٍّ ولا عنوان IP، وتُحذف بعد 3 أشهر.'],
+      h: 'إحصاءات جهازك',
+      p: ['معطّلةٌ افتراضيًا. إن فعّلتها من الإعدادات أرسل جهازك عن كل تحديث: نتيجته، وعدد محاولاته، ومدته، ورقم الإصدار. بلا رقمٍ جامعيٍّ ولا عنوان IP، وتُحذف بعد 3 أشهر.'],
     },
     { h: 'النقل خارج المملكة', p: ['المعالجة اللحظية تجري في هولندا، حيث تستضيف الكلية نظامها، تنفيذًا لطلبك بعرض بياناتك.'] },
-    { h: 'الأساس والموافقة', p: ['تسجيل دخولك موافقةٌ على هذه السياسة، ولك سحبها متى شئت بتسجيل الخروج.'] },
+    {
+      h: 'الأساس والموافقة',
+      p: [
+        'لا تدخل حتى تعلّم بنفسك خانة الموافقة على هذه السياسة، ولك سحبها متى شئت بتسجيل الخروج.',
+        'وإن كنت دون الثامنة عشرة فلا تدخل إلا بإذن وليّك.',
+      ],
+    },
     {
       h: 'حقوقك',
       p: [
         'الاطلاع: كل ما نعالجه عنك معروضٌ لك في التطبيق.',
         'الحذف: تسجيل الخروج يمحو كل شيءٍ من جهازك، ولا يبقى على الخادم شيءٌ يخصّك.',
-        'ولأي طلبٍ أو شكوى: قناة التواصل أعلاه.',
+        'ولأي طلبٍ أو شكوى: قناة التواصل أعلاه، ولك أن ترفع شكواك إلى الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا).',
       ],
     },
     { h: 'الحوادث', p: ['إن وقع تسريبٌ أو اختراق أبلغناك عبر قناة التواصل، وأبلغنا الجهات المختصة وفق نظام حماية البيانات الشخصية.'] },
@@ -83,6 +92,7 @@ const privacyEn: LegalDoc = {
       p: [
         'Your student ID and password, only to sign you in to the college system.',
         'Your data as the college system shows it to you: name, email, phone, advisor, schedule, attendance, grades, exams and notices.',
+        'The college pages show your advisor\'s name, which is someone else\'s data: it stays on your device like the rest, is hidden from shared cards, and is used for nothing.',
       ],
     },
     {
@@ -97,7 +107,9 @@ const privacyEn: LegalDoc = {
       h: 'What is kept on the server',
       p: [
         'Your password and your data are never stored on any server or written to any log.',
-        'Only after a wrong password: a hash (SHA-256) of your student ID with the number of attempts, to stop guessing and protect your account from lockout. It is deleted automatically after 15 minutes, or at the first correct sign-in.',
+        'Only after a wrong password: the number of attempts, under a pseudonym of your student ID made with a secret key only Raad\'s server holds, so your ID cannot be recovered from it. It stops guessing and protects your account from lockout, and is deleted automatically after 15 minutes, or at the first correct sign-in.',
+        'For each refresh, the server counts its outcome with no identity: a result code, the codes of the parts that failed, and a rounded duration. No student ID, no IP address, no pseudonym; it is how we learn Raad is broken before you tell us. Deleted after 3 months.',
+        'The server keeps no log of what passes through it: no requests, no replies, no error messages.',
         'When the app opens, it asks Raad\'s server whether it is paused and whether there is an announcement. That question carries none of your data.',
         'Our host, Cloudflare, may process IP addresses for operations and security, including limiting requests per address.',
       ],
@@ -120,17 +132,23 @@ const privacyEn: LegalDoc = {
       ],
     },
     {
-      h: 'Anonymous statistics',
-      p: ['Off by default. If you turn them on in Settings: each refresh\'s outcome, attempts, duration and app version. No student ID and no IP address. Deleted after 3 months.'],
+      h: 'Your device\'s statistics',
+      p: ['Off by default. If you turn them on in Settings, your device sends for each refresh: its outcome, attempts, duration and the app version. No student ID and no IP address. Deleted after 3 months.'],
     },
     { h: 'Transfer outside the Kingdom', p: ['The momentary processing happens in the Netherlands, where the college hosts its system, to carry out your request to see your data.'] },
-    { h: 'Basis and consent', p: ['Signing in is consent to this policy. You can withdraw it at any time by signing out.'] },
+    {
+      h: 'Basis and consent',
+      p: [
+        'You cannot sign in until you tick the box agreeing to this policy yourself. You can withdraw it at any time by signing out.',
+        'If you are under eighteen, sign in only with your guardian\'s permission.',
+      ],
+    },
     {
       h: 'Your rights',
       p: [
         'Access: everything we process about you is shown to you in the app.',
         'Deletion: signing out deletes everything from your device, and nothing about you remains on the server.',
-        'For any request or complaint: the contact channel above.',
+        'For any request or complaint: the contact channel above. You may also complain to the Saudi Data and AI Authority (SDAIA).',
       ],
     },
     { h: 'Incidents', p: ['If a leak or breach happens, we will tell you through the contact channel and notify the competent authorities under the Personal Data Protection Law.'] },
@@ -149,6 +167,7 @@ const termsAr: LegalDoc = {
       p: [
         'استخدم حسابك أنت فقط، ولا تدخل بحساب غيرك ولو أذن لك.',
         'وأنت مسؤولٌ عن سرية كلمة مرورك، وعن التزامك بلوائح الكلية وأنظمتها.',
+        'وقد تمنع لوائح الكلية إعطاء كلمة المرور لغير صاحبها، أو الدخول إلى نظامها من غير طريقه؛ فاقرأها، ولا تستعمل البوابة إن منعت ذلك. وتسجيل دخولك يظهر لنظام الكلية قادمًا من خادم رعد في هولندا.',
       ],
     },
     { h: 'الاستخدام المقبول', p: ['يُمنع تخمين كلمات المرور، أو محاولة الوصول إلى بيانات غيرك، أو إساءة استخدام الخدمة أو تعطيلها، أو نسخ الموقع لخداع الطلاب.'] },
@@ -170,6 +189,7 @@ const termsEn: LegalDoc = {
       p: [
         'Use only your own account. Do not sign in with anyone else\'s, even with their permission.',
         'You are responsible for keeping your password secret and for following the college\'s rules and regulations.',
+        'The college\'s rules may forbid giving your password to anyone else, or reaching its system other than through it; read them, and do not use the portal if they forbid it. Your sign-in reaches the college system from Raad\'s server in the Netherlands.',
       ],
     },
     { h: 'Acceptable use', p: ['Do not guess passwords, try to reach anyone else\'s data, misuse or disrupt the service, or copy the site to deceive students.'] },

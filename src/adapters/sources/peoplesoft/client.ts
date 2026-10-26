@@ -1,13 +1,13 @@
 // The PeopleSoft source as the browser sees it: one attempt = one call to
 // Raad's server, which streams its steps as it works; the pages it returns
 // are then read here, on the student's device.
-import { RaadError } from '../../../../raad/engine/types';
+import { RaadError } from '../../../core/attempt';
 import type { SyncResult } from '../../../core/model';
 import type { AdapterManifest, Credentials, SourceContext, StudentDataSource } from '../../../ports/source';
 import { extractCapabilities, extractGrids } from './extract/generic';
 import { extractAttendance, extractCenter, extractExams, extractGrades } from './extract/pages';
 import { mapToSnapshot, type Extracted } from './map';
-import { isPageKey, PAGE_KEYS, PAGES, type PageKey, type PsCode, type SyncResponse } from './pages';
+import { isPageKey, PAGE_KEYS, PAGES, pagesFor, type PageKey, type PsCode, type SyncResponse } from './pages';
 
 export const PEOPLESOFT_MANIFEST: AdapterManifest = {
   id: 'peoplesoft',
@@ -25,6 +25,10 @@ export interface PeopleSoftSourceOptions {
   parseHtml?: (html: string) => Document;
   /** The institution's name, as the student record carries it. */
   institution?: string;
+  /** The pages this institution has (its profile); all of them by default. */
+  pages?: readonly PageKey[];
+  /** An attempt that takes longer is given up, so a stuck connection never holds a sync. */
+  timeoutMs?: number;
   /** Dev only: receives the raw pages, e.g. to save anonymized test fixtures. */
   onRaw?: (pages: SyncResponse['pages'], extracted: Extracted, credentials: Credentials) => void;
 }
@@ -37,11 +41,17 @@ const EXTRACTORS: { [K in PageKey]: (doc: Document) => NonNullable<Extracted[K]>
 };
 
 function failureFor(status: number, code: string | undefined): RaadError {
+  // The college refused the account itself (locked, disabled): only the college can help.
+  if (code === 'ACCOUNT') return new RaadError('CREDENTIALS', 'ACCOUNT');
   if (status === 401) return new RaadError('CREDENTIALS');
   // Too many wrong passwords: waiting and retrying would only extend the lock.
   if (code === 'LOCKED') return new RaadError('CREDENTIALS', 'LOCKED');
   if (code === 'PAUSED') return new RaadError('PAUSED');
-  if (status === 429) return new RaadError('RATE_LIMIT');
+  // Raad is resting because the college is struggling: no retrying until he is back.
+  if (code === 'COOLDOWN') return new RaadError('PAUSED', 'COOLDOWN');
+  // Raad's server is missing a protection: retrying will not help.
+  if (code === 'UNAVAILABLE') return new RaadError('UNEXPECTED', 'UNAVAILABLE');
+  if (status === 429) return new RaadError('RATE_LIMIT', code);
   if (code === 'BLOCKED') return new RaadError('UNEXPECTED', 'BLOCKED');
   if (code === 'SESSION_EXPIRED' || code === 'NOT_AUTHORIZED') return new RaadError('SESSION', code);
   if (status >= 500) return new RaadError('TRANSIENT', code ?? `HTTP ${status}`);
@@ -80,6 +90,8 @@ async function readLines(res: Response, onLine: (l: Line) => void): Promise<Extr
 
 export function createPeopleSoftSource(opts: PeopleSoftSourceOptions = {}): StudentDataSource {
   const endpoint = opts.endpoint ?? '/api/v1/sync';
+  const available = opts.pages ?? PAGE_KEYS;
+  const timeoutMs = opts.timeoutMs ?? 45_000;
   const doFetch = opts.fetch ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
   const parseHtml = opts.parseHtml ?? ((html: string) => new DOMParser().parseFromString(html, 'text/html'));
   const areasOf = (note?: string) => {
@@ -87,57 +99,73 @@ export function createPeopleSoftSource(opts: PeopleSoftSourceOptions = {}): Stud
     return isPageKey(page) ? [...PAGES[page].areas] : undefined;
   };
 
+  /** Asks Raad's server for the pages, telling each of its steps as it comes. */
+  async function fetchPages(ctx: SourceContext, credentials: Credentials, wanted: PageKey[], signal: AbortSignal) {
+    const t0 = Date.now();
+    ctx.step('connect', 'start');
+    let res: Response;
+    try {
+      res = await doFetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/x-ndjson, application/json' },
+        body: JSON.stringify({ userid: credentials.userid, pwd: credentials.pwd, pages: wanted }),
+        signal,
+      });
+    } catch (e) {
+      ctx.step('connect', 'fail', { ms: Date.now() - t0 });
+      throw e;
+    }
+    ctx.step('connect', 'ok', { ms: Date.now() - t0 });
+
+    if (res.ok && /application\/x-ndjson/i.test(res.headers.get('Content-Type') ?? '') && res.body) {
+      // Raad's server tells each step as it happens.
+      const done = await readLines(res, l => {
+        if (l.t === 'step') ctx.step(l.key, l.status, { ms: l.ms, note: l.note, areas: l.key === 'fetch' ? areasOf(l.note) : undefined });
+      });
+      if (!done) throw new RaadError('TRANSIENT', 'STREAM_CUT');
+      if (done.status !== 200) throw failureFor(done.status, done.body.code);
+      return done.body;
+    }
+    const body = await res.json().catch(() => ({})) as Partial<SyncResponse> & { code?: string };
+    if (!res.ok) throw failureFor(res.status, body.code);
+    // An older server: replay its log.
+    for (const s of body.log ?? []) {
+      const page = s.label.startsWith('PAGE ') ? s.label.slice(5) : undefined;
+      ctx.step(page ? 'fetch' : 'signin', s.ok ? 'ok' : 'fail', { ms: s.ms, note: page ?? s.note, areas: areasOf(page) });
+    }
+    return body;
+  }
+
   return {
     manifest: PEOPLESOFT_MANIFEST,
     async sync(ctx: SourceContext): Promise<SyncResult> {
       const credentials = ctx.credentials;
       if (!credentials) throw new RaadError('CREDENTIALS', 'NO_CREDENTIALS');
+      // Only the pages whose areas are due; at least one, which also refreshes the student record.
+      const wanted = ctx.areas ? pagesFor(ctx.areas, available) : [...available];
+      if (!wanted.length) wanted.push(available[0]!);
 
-      let res: Response;
-      const t0 = Date.now();
-      ctx.step('connect', 'start');
-      try {
-        res = await doFetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/x-ndjson, application/json' },
-          body: JSON.stringify({ userid: credentials.userid, pwd: credentials.pwd, pages: PAGE_KEYS }),
-          signal: ctx.signal,
-        });
-      } catch (e) {
-        ctx.step('connect', 'fail', { ms: Date.now() - t0 });
-        throw new RaadError(ctx.signal.aborted ? 'CANCELLED' : 'TRANSIENT', (e as Error).message);
-      }
-      ctx.step('connect', 'ok', { ms: Date.now() - t0 });
-
+      // The attempt ends when Raad gives up on it, or after timeoutMs, whichever comes first.
+      const ctrl = new AbortController();
+      const cancel = () => ctrl.abort();
+      ctx.signal.addEventListener('abort', cancel, { once: true });
+      const timer = setTimeout(cancel, timeoutMs);
       let body: Partial<SyncResponse> & { code?: string };
-      if (res.ok && /application\/x-ndjson/i.test(res.headers.get('Content-Type') ?? '') && res.body) {
-        // Raad's server tells each step as it happens.
-        let done: Awaited<ReturnType<typeof readLines>>;
-        try {
-          done = await readLines(res, l => {
-            if (l.t === 'step') ctx.step(l.key, l.status, { ms: l.ms, note: l.note, areas: l.key === 'fetch' ? areasOf(l.note) : undefined });
-          });
-        } catch (e) {
-          throw new RaadError(ctx.signal.aborted ? 'CANCELLED' : 'TRANSIENT', (e as Error).message);
-        }
-        if (!done) throw new RaadError('TRANSIENT', 'STREAM_CUT');
-        if (done.status !== 200) throw failureFor(done.status, done.body.code);
-        body = done.body;
-      } else {
-        body = await res.json().catch(() => ({})) as typeof body;
-        if (!res.ok) throw failureFor(res.status, body.code);
-        // An older server: replay its log.
-        for (const s of body.log ?? []) {
-          const page = s.label.startsWith('PAGE ') ? s.label.slice(5) : undefined;
-          ctx.step(page ? 'fetch' : 'signin', s.ok ? 'ok' : 'fail', { ms: s.ms, note: page ?? s.note, areas: areasOf(page) });
-        }
+      try {
+        body = await fetchPages(ctx, credentials, wanted, ctrl.signal);
+      } catch (e) {
+        if (e instanceof RaadError) throw e;
+        throw new RaadError(ctx.signal.aborted ? 'CANCELLED' : 'TRANSIENT', ctrl.signal.aborted ? 'TIMEOUT' : (e as Error).message);
+      } finally {
+        clearTimeout(timer);
+        ctx.signal.removeEventListener('abort', cancel);
       }
 
       const x0 = Date.now();
       ctx.step('extract', 'start');
       const extracted: Extracted = { blocks: [] };
       const failures: Partial<Record<PageKey, PsCode | 'PARSE'>> = { ...body.errors };
-      for (const key of PAGE_KEYS) {
+      for (const key of wanted) {
         const html = body.pages?.[key];
         if (!html) continue;
         try {
@@ -147,11 +175,12 @@ export function createPeopleSoftSource(opts: PeopleSoftSourceOptions = {}): Stud
           try { extracted.blocks!.push(...extractGrids(doc, key)); } catch { /* ignore */ }
           if (key === 'center') extracted.capabilities = extractCapabilities(doc);
         } catch {
+          // The page is not the one we know (its landmarks are gone): an error, never an empty page.
           failures[key] = 'PARSE';
         }
       }
 
-      const got = PAGE_KEYS.filter(k => extracted[k] !== undefined);
+      const got = wanted.filter(k => extracted[k] !== undefined);
       if (!got.length) {
         ctx.step('extract', 'fail', { ms: Date.now() - x0 });
         const codes = Object.values(failures);
@@ -160,7 +189,7 @@ export function createPeopleSoftSource(opts: PeopleSoftSourceOptions = {}): Stud
           : new RaadError(codes.includes('PARSE') ? 'UNEXPECTED' : 'TRANSIENT', codes[0]);
       }
       opts.onRaw?.(body.pages ?? {}, extracted, credentials);
-      const result = mapToSnapshot(extracted, failures, credentials.userid, body.fetchedAt ?? new Date().toISOString(), opts.institution ?? '');
+      const result = mapToSnapshot(extracted, failures, credentials.userid, body.fetchedAt ?? new Date().toISOString(), opts.institution ?? '', wanted);
       ctx.step('extract', 'ok', { ms: Date.now() - x0 });
       return result;
     },

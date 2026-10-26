@@ -1,0 +1,25 @@
+# Is the portal up, and can Raad reach the college? Every hour. A failed run
+# emails the owner before students have to tell him (RUNBOOK.md). It opens
+# the college sign-in page only, never signs in.
+name: watch
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: The site answers
+        run: curl -fsS -o /dev/null https://taleeb-portal.pages.dev/
+      - name: Raad answers, and is not resting
+        run: |
+          status=$(curl -fsS https://taleeb-portal.pages.dev/api/v1/status)
+          echo "$status"
+          echo "$status" | grep -q '"auto":true' && { echo "Raad is resting: the college struggled or refused him"; exit 1; } || true
+      - name: Raad reaches the college
+        run: |
+          health=$(curl -fsS https://taleeb-portal.pages.dev/api/v1/health)
+          echo "$health"
+          echo "$health" | grep -q '"reachable":true'

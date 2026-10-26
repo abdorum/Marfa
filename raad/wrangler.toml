@@ -18,21 +18,46 @@ preview_urls = false
 [placement]
 region = "azure:westeurope"
 
-# Abuse protection (server/guard.ts).
-# Wrong-password counters, keyed by a hash of the ID, kept 15 minutes.
+# Raad keeps no logs: no request, reply or error message is stored anywhere
+# (Docs/09). Workers Logs stay off; `wrangler tail` shows only what the code
+# prints, which is an error's kind, never its message.
+[observability]
+enabled = false
+
+# /api/v1/status shows which deploy is running, so anyone the owner shows the
+# code to can check it is the one serving students.
+[version_metadata]
+binding = "CF_VERSION_METADATA"
+
+# Anonymous counters: result codes and durations, never an ID or an address.
+# Waits for Analytics Engine to be enabled on the account (Dashboard → Workers
+# → Analytics Engine); until then the counters are simply not written.
+# [[analytics_engine_datasets]]
+# binding = "METRICS"
+# dataset = "raad"
+
+# Abuse protection (server/guard.ts). Every one of these must be bound: a
+# missing one refuses every sync. The secret ID_KEY too (wrangler secret put ID_KEY).
+# Wrong-password counters, keyed by an HMAC of the ID, kept 15 minutes; and Raad's rest.
 [[kv_namespaces]]
 binding = "GUARD"
 id = "b2a0c22c36c5408db153ce90fccc4583"
 
-# One address: 300 syncs a minute. A campus Wi-Fi puts many students behind
+# One address: 60 syncs a minute. A campus Wi-Fi puts many students behind
 # one address; the per-ID limit below is what protects accounts.
 [[ratelimits]]
 name = "IP_LIMIT"
 namespace_id = "1001"
-simple = { limit = 300, period = 60 }
+simple = { limit = 60, period = 60 }
 
-# One student ID: 6 syncs a minute.
+# One student ID: 4 syncs a minute.
 [[ratelimits]]
 name = "ID_LIMIT"
 namespace_id = "1002"
-simple = { limit = 6, period = 60 }
+simple = { limit = 4, period = 60 }
+
+# Raad as a whole: 300 syncs a minute, so a morning rush cannot flood the college.
+[[ratelimits]]
+name = "GLOBAL_LIMIT"
+namespace_id = "1003"
+simple = { limit = 300, period = 60 }

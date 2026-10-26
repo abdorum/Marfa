@@ -61,9 +61,16 @@ interface StudentDataSource {
 interface KeyValueStore { get; set; del; clear }
 interface Sealer { seal(value); open(sealed); reset() }
 
-// src/ports/raad.ts: هل رعدٌ موقوف؟ وهل من إعلان؟
+// src/ports/raad.ts: هل رعدٌ موقوف أو يستريح؟ وهل من إعلان؟
 interface RaadServer { status(): Promise<ServerStatus | undefined> }
+
+// src/ports/edge.ts: موصّل مصدرٍ من الفئة د يستضيفه خادم رعد.
+interface EdgeConnector { id; parts; sync(userid, pwd, parts, emit); health() }
 ```
+
+**مفردات المحاولة في النواة** (`src/core/attempt.ts`): الخطوات وأنواع الأعطال (`RaadError`، `StepEvent`، `AttemptContext`). يتكلّمها المنفذ وكل محوّل، ولا يعرف أحدٌ منهم محرك رعد. والمحرك يقرّر ما يُصنع بكل نوع.
+
+**لا اعتماد دائري:** الموصّل يعرف منفذه (`src/ports/edge.ts`) لا خادم رعد. والخادم يبني موصّلاته من ملف المؤسسة (`raad/server/connectors.ts`)، ويعطيها تعريفه بنفسه (`USER_AGENT`).
 
 **لا منفذ للكتابة، ولن يكون:** المنتج للعرض فقط (ADR-020).
 
@@ -82,6 +89,9 @@ interface RaadServer { status(): Promise<ServerStatus | undefined> }
 | بداية الأسبوع والعطلة | الأحد، والجمعة والسبت |
 | المنطقة الزمنية | الرياض، +03:00 |
 | مقرّ رعد | أمستردام، بجوار خوادم الكلية |
+| PeopleSoft | العنوان `https://sis.bmc.edu.sa`، والموقع `hp`، والصفحات الأربع ومنها صفحة الحضور الخاصة بالكلية |
+
+فمحوّل PeopleSoft لا يذكر مؤسسةً بعينها: مؤسسةٌ ثانيةٌ على PeopleSoft تكتب عنوانها وصفحاتها في ملفها.
 
 ## رعد: جزءٌ قائمٌ بذاته
 
@@ -98,8 +108,8 @@ interface RaadServer { status(): Promise<ServerStatus | undefined> }
 
 | المسار | العمل |
 |---|---|
-| `GET /api/v1/status` | هل رعدٌ موقوف؟ وإعلان صاحب المشروع. لا يمسّ نظام المؤسسة |
-| `GET /api/v1/health` | هل يصل الخادم إلى نظام المؤسسة؟ يفتح صفحة الدخول فقط |
+| `GET /api/v1/status` | هل رعدٌ موقوف أو يستريح؟ وإعلان صاحب المشروع، وإصدار رعد ورقم النشر. لا يمسّ نظام المؤسسة |
+| `GET /api/v1/health` | هل يصل الخادم إلى نظام المؤسسة؟ يفتح صفحة الدخول فقط، ويُحفظ جوابه دقيقة |
 | `POST /api/v1/sync` | دخول، وقراءة الأجزاء المسموحة، وخروج. ويبثّ خطواته إن طُلب ذلك |
 | `POST /api/v1/metrics` | إحصاءات مجهولة، إن وافق الطالب |
 
@@ -126,6 +136,14 @@ interface RaadServer { status(): Promise<ServerStatus | undefined> }
 | `RAAD_PAUSED=1` | يوقف كل تحديث، ويعرض التطبيق أن رعدًا موقوف |
 | `RAAD_MESSAGE_AR` / `RAAD_MESSAGE_EN` | سبب الإيقاف بكلماتك |
 | `NOTICE_AR` / `NOTICE_EN` | إعلانٌ يظهر بطاقةً لكل الطلاب |
+| `RAAD_DISABLE_PAGES` | أجزاءٌ لا تُقرأ، دون نشر |
+| `RAAD_STALE_MINUTES` | عمر البيانات قبل أن تحدّثها الأجهزة بنفسها |
+
+## الصدق قبل الدقة
+
+- **لكل صفحةٍ معالم** (`landmark` في `extract/dom.ts`): إن غابت فالصفحة ليست التي نعرفها، والنتيجة خطأ `PARSE` لا قائمةٌ فارغة.
+- **ما رجع فارغًا بعد امتلاء** في الفصل نفسه (الجدول، والحضور، والدرجات) يُعدّ مشكوكًا فيه (`doubtful` في `src/core/snapshot.ts`): تبقى البيانات القديمة موسومةً بالقِدم، فلا يُقال للطالب إن محاضراته حُذفت.
+- **رصيد الغياب** يُحسب على أقصر فصلٍ محتمل ما دامت نهايته مجهولة، ويُعرض مدًى.
 
 ## محوّل PeopleSoft: لماذا ينقسم
 

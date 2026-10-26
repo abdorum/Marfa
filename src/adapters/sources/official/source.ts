@@ -2,7 +2,7 @@
 // read-only API in Docs/11-integration-contract.md. It passes the same
 // contract tests as the PeopleSoft source, so switching is a configuration
 // change, not a rewrite.
-import { RaadError } from '../../../../raad/engine/types';
+import { RaadError } from '../../../core/attempt';
 import { normalizeCourseKey, parseCourseKey, type Course, type DataArea, type Provenance, type SyncResult } from '../../../core/model';
 import type { AdapterManifest, SourceContext, StudentDataSource } from '../../../ports/source';
 

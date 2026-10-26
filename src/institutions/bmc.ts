@@ -15,4 +15,6 @@ export const BMC: InstitutionProfile = {
   weekend: [5, 6],
   timeZone: { id: 'Asia/Riyadh', offsetMinutes: 180 },
   raadHome: { ar: 'أمستردام، بجوار خوادم الكلية', en: 'Amsterdam, next to the college servers' },
+  // The attendance page is the college's own (Docs/10-peoplesoft-notes.md).
+  peoplesoft: { base: 'https://sis.bmc.edu.sa', site: 'hp', pages: ['center', 'grades', 'attendance', 'exams'] },
 };

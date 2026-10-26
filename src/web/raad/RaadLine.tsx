@@ -1,7 +1,7 @@
 // Raad's line: tells the student, as it happens, what Raad is doing (the
 // transparency the owner asked for), and why he stopped when he fails.
 import { useEffect, useState } from 'preact/hooks';
-import type { StepEvent } from '../../../raad/engine/types';
+import type { StepEvent } from '../../core/attempt';
 import { lang, strings } from '../i18n';
 import { activeJob, lastJob, liveStep, server } from '../state';
 import { Link, RaadAvatar, Spinner } from '../ui';
@@ -36,7 +36,7 @@ export function stepLabel(s: StepEvent): string {
 /** The reason a job failed, in the student's words. */
 export function failureText(kind: string, message?: string): string {
   const f = strings.value.raad.failure;
-  if (message === 'BLOCKED') return f.BLOCKED!;
+  if (message && f[message] && message !== kind) return f[message]!;
   return f[kind] ?? f.UNEXPECTED!;
 }
 
@@ -53,7 +53,7 @@ export function RaadLine({ onCard, showIdle }: { onCard?: boolean; showIdle?: bo
     return (
       <Link href="/raad" class={`${cls} fail`} aria-live="polite">
         <RaadAvatar size={28} status="paused" />
-        <span class="text">{strings.value.raad.failure.PAUSED}{msg ? ` ${msg}` : ''}</span>
+        <span class="text">{server.value?.auto ? strings.value.raad.failure.COOLDOWN : strings.value.raad.failure.PAUSED}{msg ? ` ${msg}` : ''}</span>
       </Link>
     );
   }

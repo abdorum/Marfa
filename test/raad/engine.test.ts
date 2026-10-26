@@ -31,14 +31,16 @@ function runner(outcomes: (FailureKind | 'ok')[]): JobRunner<object, string> & {
 }
 
 describe('policy', () => {
-  it('backs off exponentially with jitter, never below the minimum gap', () => {
+  it('backs off exponentially with jitter, for a lost session as for a network failure', () => {
     const mid = () => 0.5;
-    expect(decide('TRANSIENT', 1, mid)).toEqual({ retry: true, delayMs: 2000 });
-    expect(decide('TRANSIENT', 3, mid)).toEqual({ retry: true, delayMs: 8000 });
+    expect(decide('TRANSIENT', 1, mid)).toEqual({ retry: true, delayMs: 5000 });
+    expect(decide('TRANSIENT', 3, mid)).toEqual({ retry: true, delayMs: 20000 });
     expect(decide('TRANSIENT', 10, mid)).toEqual({ retry: true, delayMs: 30000 });
     const low = decide('TRANSIENT', 1, () => 0);
-    expect(low.retry && low.delayMs).toBe(MIN_GAP_MS);
-    expect(decide('SESSION', 4, mid)).toEqual({ retry: true, delayMs: MIN_GAP_MS });
+    expect(low.retry && low.delayMs).toBe(3750);
+    expect(low.retry && low.delayMs).toBeGreaterThanOrEqual(MIN_GAP_MS);
+    expect(decide('SESSION', 1, mid)).toEqual({ retry: true, delayMs: 5000 });
+    expect(decide('SESSION', 2, mid)).toEqual({ retry: true, delayMs: 10000 });
   });
 
   it('never retries wrong credentials, a pause by the owner, or the unexpected', () => {
@@ -59,7 +61,7 @@ describe('engine', () => {
     expect(job.result).toBe('done');
     expect(job.attempt).toBe(3);
     expect(job.failure).toBeUndefined();
-    expect(deps.slept).toEqual([2000, 4000]);
+    expect(deps.slept).toEqual([5000, 10000]);
     expect(deps.saved).toContain('waiting_retry');
     // The student sees the waits and the new attempts.
     expect(job.steps.map(s => `${s.key}:${s.note}`)).toEqual(['wait:SESSION', 'attempt:2', 'wait:TRANSIENT', 'attempt:3']);

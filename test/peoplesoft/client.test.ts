@@ -92,6 +92,9 @@ describe('PeopleSoft source', () => {
     expect(await kind(502, 'NOT_AUTHORIZED')).toBe('SESSION');
     expect(await kind(502, 'TIMEOUT')).toBe('TRANSIENT');
     expect(await kind(400, 'BAD_REQUEST')).toBe('UNEXPECTED');
+    expect(await kind(403, 'ACCOUNT')).toBe('CREDENTIALS'); // only the college can unlock an account
+    expect(await kind(503, 'COOLDOWN')).toBe('PAUSED'); // Raad rests: no retrying until he is back
+    expect(await kind(503, 'UNAVAILABLE')).toBe('UNEXPECTED');
     expect(await run(() => { throw new TypeError('offline'); }).catch((e: RaadError) => e.kind)).toBe('TRANSIENT');
   });
 
@@ -99,6 +102,41 @@ describe('PeopleSoft source', () => {
     const e = await run(() => ok({ pages: {}, errors: { center: 'NOT_AUTHORIZED', grades: 'SESSION_EXPIRED' } })).catch(x => x);
     expect(e).toBeInstanceOf(RaadError);
     expect(e.kind).toBe('SESSION');
+  });
+
+  it('asks only for the pages whose areas are due, and leaves the others as they are', async () => {
+    const asked: unknown[] = [];
+    const src = createPeopleSoftSource({
+      fetch: async (_u, init) => {
+        const pages: string[] = JSON.parse(String(init?.body)).pages;
+        asked.push(pages);
+        const all: Record<string, string> = { center: CENTER, grades: GRADES, attendance: ATTENDANCE, exams: EXAMS_SOME };
+        return ok({ pages: Object.fromEntries(pages.map(p => [p, all[p]!])) });
+      },
+      parseHtml: toDoc,
+    });
+    const r = await src.sync({ ...testCtx(), credentials: { userid: '1', pwd: 'p' }, areas: ['schedule', 'notices'] });
+    expect(asked).toEqual([['center']]);
+    expect(Object.keys(r.provenance).sort()).toEqual(['notices', 'schedule', 'student']);
+    await src.sync({ ...testCtx(), credentials: { userid: '1', pwd: 'p' }, areas: ['exams', 'grades'] });
+    expect(asked[1]).toEqual(['grades', 'exams']);
+  });
+
+  it('a page whose landmarks are gone is an error, never an empty schedule', async () => {
+    const r = await run(() => ok({ pages: { center: '<div id="NEW_LAYOUT">Welcome</div>', grades: GRADES } }));
+    expect(r.provenance.schedule).toEqual({ status: 'error', error: 'PARSE' });
+    expect(r.data.sections).toBeUndefined();
+    expect(r.provenance.grades?.status).toBe('fresh');
+  });
+
+  it('gives up an attempt that takes too long', async () => {
+    const src = createPeopleSoftSource({
+      timeoutMs: 20,
+      fetch: (_u, init) => new Promise((_, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))),
+      parseHtml: toDoc,
+    });
+    const e = await src.sync({ ...testCtx(), credentials: { userid: '1', pwd: 'p' } }).catch(x => x);
+    expect(e).toMatchObject({ kind: 'TRANSIENT', message: 'TIMEOUT' });
   });
 
   it('never sends credentials anywhere but the configured endpoint, and requires them', async () => {

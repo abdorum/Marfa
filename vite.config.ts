@@ -1,6 +1,6 @@
 import preact from '@preact/preset-vite';
 import { readFileSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
 import type { Plugin, ViteDevServer } from 'vite';
@@ -30,7 +30,7 @@ function raadInDev(): Plugin {
             const { handleApi } = await server.ssrLoadModule('/raad/server/router.ts');
             const body = req.method === 'POST' ? await readBody(req) : undefined;
             const headers = Object.fromEntries(Object.entries(req.headers).filter(([, v]) => typeof v === 'string')) as Record<string, string>;
-            const response: Response = await handleApi(new Request(`http://localhost${url}`, { method: req.method, body, headers }));
+            const response: Response = await handleApi(new Request(`http://localhost${url}`, { method: req.method, body, headers }), { RAAD_DEV: "1" });
             res.statusCode = response.status;
             response.headers.forEach((v, k) => res.setHeader(k, v));
             if (response.body) {
@@ -75,8 +75,24 @@ function raadInDev(): Plugin {
   };
 }
 
+/**
+ * Gives the service worker a new cache name on every build, so an update
+ * replaces the old files instead of piling up beside them (public/sw.js).
+ */
+function swVersion(): Plugin {
+  return {
+    name: 'sw-version',
+    apply: 'build',
+    async closeBundle() {
+      const file = path.resolve('dist/sw.js');
+      const src = await readFile(file, 'utf8');
+      await writeFile(file, src.replace('__BUILD__', `${pkg.version}-${Date.now().toString(36)}`), 'utf8');
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [preact(), raadInDev()],
+  plugins: [preact(), raadInDev(), swVersion()],
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   build: { outDir: 'dist', target: 'es2022' },
   test: {

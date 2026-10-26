@@ -3,7 +3,7 @@
 // the UI that knows which adapters exist.
 import { computed, effect, signal } from '@preact/signals';
 import { isTerminal, realDeps } from '../../raad/engine/engine';
-import type { StepEvent } from '../../raad/engine/types';
+import type { StepEvent } from '../core/attempt';
 import { sendMetrics } from '../adapters/browser/metrics';
 import { createRaadServer } from '../adapters/browser/raad-server';
 import { createSealer } from '../adapters/browser/sealer';

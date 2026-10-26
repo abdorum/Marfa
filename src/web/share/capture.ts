@@ -6,7 +6,7 @@ import { PRODUCT } from '../../app/product';
 import { dateLabel, dir, lang, strings } from '../i18n';
 
 export interface CaptureOptions {
-  /** Replace elements marked data-private (ID, email, phone). */
+  /** Replace elements marked data-private (ID, email, phone, advisor). */
   mask: boolean;
 }
 
@@ -20,7 +20,8 @@ function footer(): HTMLElement {
   const b = document.createElement('b');
   b.textContent = strings.value.appName;
   const date = document.createElement('span');
-  date.textContent = dateLabel(new Date(), { day: 'numeric', month: 'long', year: 'numeric' });
+  // Said on the picture itself, since it travels far from the app: unofficial.
+  date.textContent = `${dateLabel(new Date(), { day: 'numeric', month: 'long', year: 'numeric' })} · ${strings.value.share.unofficial}`;
   name.append(b, date);
   const site = document.createElement('span');
   site.className = 'site';

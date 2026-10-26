@@ -319,7 +319,7 @@ export const AttendanceCard: CardFn = ({ index }) => {
         <div class="budget">
           <p class="row-flex"><span class="dot-c" style={{ background: courseColor(worst.course.key) }} /><b><bdi>{worst.course.title ?? worst.course.key}</bdi></b></p>
           <Chevrons used={budget.used} allowed={budget.allowed} level={worst.level} />
-          <p class="label">{t.left(budget.left)}</p>
+          <p class="label">{t.left(budget.left, budget.leftAtMost)}</p>
         </div>
       )}
     </Card>

@@ -24,12 +24,36 @@ describe('mergeSnapshot', () => {
     const a = mergeSnapshot(undefined, first, 'peoplesoft');
     const b = mergeSnapshot(a, {
       fetchedAt: T2,
-      data: { sections: [] },
-      provenance: { schedule: { status: 'fresh', fetchedAt: T2 }, attendance: { status: 'error', error: 'TIMEOUT' } },
+      data: { holds: [] },
+      provenance: { notices: { status: 'fresh', fetchedAt: T2 }, attendance: { status: 'error', error: 'TIMEOUT' } },
     }, 'peoplesoft');
-    expect(b.sections).toEqual([]); // fresh and empty means empty
+    expect(b.holds).toEqual([]); // fresh and empty means empty, for areas that can be
     expect(b.attendance).toEqual(a.attendance);
     expect(b.provenance.attendance).toEqual({ status: 'stale', fetchedAt: T1, error: 'TIMEOUT' });
+  });
+
+  it('doubts a schedule that comes back empty in the same term, and keeps the old one', () => {
+    const a = mergeSnapshot(undefined, first, 'peoplesoft');
+    const b = mergeSnapshot(a, {
+      fetchedAt: T2,
+      data: { sections: [], terms: [{ code: '2701', current: true }] },
+      provenance: { schedule: { status: 'fresh', fetchedAt: T2 } },
+    }, 'peoplesoft');
+    expect(b.sections).toEqual(a.sections);
+    expect(b.provenance.schedule).toEqual({ status: 'stale', fetchedAt: T1, error: 'PARSE' });
+    // Nothing was "removed" in what's new.
+    expect(b.changes.filter(c => c.at === T2)).toEqual([]);
+  });
+
+  it('believes an empty schedule in a new term', () => {
+    const a = mergeSnapshot(undefined, first, 'peoplesoft');
+    const b = mergeSnapshot(a, {
+      fetchedAt: T2,
+      data: { sections: [], terms: [{ code: '2702', current: true }] },
+      provenance: { schedule: { status: 'fresh', fetchedAt: T2 } },
+    }, 'peoplesoft');
+    expect(b.sections).toEqual([]);
+    expect(b.provenance.schedule).toEqual({ status: 'fresh', fetchedAt: T2 });
   });
 
   it('an area that never loaded stays in error, not stale', () => {

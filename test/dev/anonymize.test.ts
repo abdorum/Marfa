@@ -21,6 +21,14 @@ describe('anonymize', () => {
     expect(out).toBe('<td valign="top" align="left">Ahmed</td><td>Alignment</td>');
   });
 
+  it('drops what the page says about the college servers', () => {
+    const page = `<html><!-- OTHERS/0/WIN; ToolsRel=8.60; User=1; DB=PROD/ORACLE; AppServ=//10.0.0.1:9000; -->
+<DIV id='pt_envinfo_win0' DB='PROD/ORACLE' AppServ='//10.0.0.1:9000'></DIV><span id="X">kept</span></html>`;
+    const out = anonymize(page, []);
+    expect(out).not.toMatch(/AppServ|PROD|10\.0\.0\.1|ToolsRel/);
+    expect(out).toContain('<span id="X">kept</span>');
+  });
+
   it('scrubs session tokens', () => {
     const out = anonymize('<input type=hidden name="ICSID" value="abc123secret"><input name=\'lcsrf_token\' value=\'zz\'>', []);
     expect(out).not.toContain('abc123secret');

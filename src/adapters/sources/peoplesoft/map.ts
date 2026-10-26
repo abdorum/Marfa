@@ -19,7 +19,7 @@ export interface Extracted {
 const ARABIC = /[؀-ۿ]/;
 
 export function toErrorCode(code: PsCode | 'PARSE'): ErrorCode {
-  return code === 'SESSION_EXPIRED' || code === 'NOT_AUTHORIZED' ? 'SESSION' : code === 'BAD_CREDENTIALS' || code === 'BLOCKED' ? 'UNAVAILABLE' : code;
+  return code === 'SESSION_EXPIRED' || code === 'NOT_AUTHORIZED' ? 'SESSION' : code === 'BAD_CREDENTIALS' || code === 'ACCOUNT' || code === 'BLOCKED' ? 'UNAVAILABLE' : code;
 }
 
 /** The term the pages talk about: from attendance rows, else from the LMS ids ("2701-…"). */
@@ -29,7 +29,11 @@ function currentTermCode(x: Extracted): string {
   return fromAttendance || fromLms || 'current';
 }
 
-export function mapToSnapshot(x: Extracted, failures: Partial<Record<PageKey, PsCode | 'PARSE'>>, userid: string, fetchedAt: string, institution: string): SyncResult {
+/** `requested`: the pages this sync asked for. Areas of the others are left as they are. */
+export function mapToSnapshot(
+  x: Extracted, failures: Partial<Record<PageKey, PsCode | 'PARSE'>>, userid: string, fetchedAt: string, institution: string,
+  requested: readonly PageKey[] = PAGE_KEYS,
+): SyncResult {
   const termCode = currentTermCode(x);
   const courses = new Map<string, Course>();
   // Courses are known by their whole code: "MED 101" and "MED 102" stay two
@@ -115,7 +119,7 @@ export function mapToSnapshot(x: Extracted, failures: Partial<Record<PageKey, Ps
     return { ...b, titles: ar || en ? { ar, en } : undefined, firstSeen: fetchedAt, lastSeen: fetchedAt };
   });
 
-  return { data, provenance: provenance(x, failures, fetchedAt), fetchedAt };
+  return { data, provenance: provenance(x, failures, fetchedAt, requested), fetchedAt };
 }
 
 function student(x: Extracted, userid: string, institution: string): Student {
@@ -138,9 +142,9 @@ function student(x: Extracted, userid: string, institution: string): Student {
   };
 }
 
-function provenance(x: Extracted, failures: Partial<Record<PageKey, PsCode | 'PARSE'>>, fetchedAt: string) {
+function provenance(x: Extracted, failures: Partial<Record<PageKey, PsCode | 'PARSE'>>, fetchedAt: string, requested: readonly PageKey[]) {
   const out: Partial<Record<DataArea, Provenance>> = {};
-  for (const key of Object.keys(PAGES) as PageKey[]) {
+  for (const key of requested) {
     const failure = failures[key];
     for (const area of PAGES[key].areas) {
       out[area] = x[key] && !failure
@@ -151,8 +155,11 @@ function provenance(x: Extracted, failures: Partial<Record<PageKey, PsCode | 'PA
   // The student record is assembled from several pages; it is fresh if any of them arrived.
   if (x.center || x.grades || x.attendance) out.student = { status: 'fresh', fetchedAt };
   // Extras are only complete when every page arrived; otherwise a block from a
-  // missing page would look like it disappeared.
-  const allPages = PAGE_KEYS.every(k => x[k] && !failures[k]);
-  out.extras = allPages ? { status: 'fresh', fetchedAt } : { status: 'error', error: 'UPSTREAM' };
+  // missing page would look like it disappeared. A sync that read only some
+  // pages on purpose leaves them as they were.
+  if (PAGE_KEYS.every(k => requested.includes(k))) {
+    const allPages = PAGE_KEYS.every(k => x[k] && !failures[k]);
+    out.extras = allPages ? { status: 'fresh', fetchedAt } : { status: 'error', error: 'UPSTREAM' };
+  }
   return out;
 }

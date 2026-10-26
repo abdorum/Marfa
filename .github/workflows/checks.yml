@@ -1,0 +1,20 @@
+# Every push and pull request: types, tests and a build. Cloudflare deploys
+# main on its own; this tells the owner, by email, when a push broke something.
+name: checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build

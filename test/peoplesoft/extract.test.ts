@@ -32,10 +32,18 @@ describe('extractors', () => {
   });
 
   it('reads holds, to-dos and an advisor when present', () => {
-    const c = extractCenter(toDoc(`<div>Holds Description Library Fine details To Do List
+    const c = extractCenter(toDoc(`<span id="DERIVED_SSS_SCL_TITLE1$78$">Ali's Student Center</span><div>Holds Description Library Fine details To Do List
       Descr2 Submit medical report Advisor Program Advisor
       <span id="DERIVED_SSS_SCL_NAME_DISPLAY$span$0">Dr. Sara</span></div>`));
     expect(c).toMatchObject({ holds: ['Library Fine'], todos: ['Submit medical report'], advisor: 'Dr. Sara' });
+  });
+
+  it('refuses a page that is not the one it knows, instead of reading it as empty', () => {
+    const changed = toDoc('<span id="NEW_LAYOUT_TITLE">Student Center</span><p>Your classes</p>');
+    expect(() => extractCenter(changed)).toThrow(/landmarks of center/);
+    expect(() => extractGrades(changed)).toThrow(/landmarks of grades/);
+    expect(() => extractAttendance(changed)).toThrow(/landmarks of attendance/);
+    expect(() => extractExams(changed)).toThrow(/landmarks of exams/);
   });
 
   it('reads grades and term statistics', () => {

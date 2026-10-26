@@ -1,16 +1,20 @@
-// Reads the requested pages one at a time. Pages that fail get a second pass
-// in a brand-new session — the same fix students do by hand (sign out, clear
-// cookies, sign in again). Every step is reported as it happens.
-import type { ServerEvent } from '../../../../../raad/server/connector';
-import { PAGE_KEYS, type PageKey, type PsCode, type ServerStep, type SyncResponse } from '../pages';
-import { PsError, PsSession } from './session';
+// Reads the requested pages one at a time. Pages that lost their session get
+// a second pass in a brand-new one — the same fix students do by hand (sign
+// out, clear cookies, sign in again). A timeout or a college error gets no
+// second pass here: the browser decides, after a pause, so a struggling
+// college is not asked twice as often. Every step is reported as it happens,
+// and every session that signed in is signed out, whatever happens.
+import type { ServerEvent } from '../../../../ports/edge';
+import { type PageKey, type PsCode, type ServerStep, type SyncResponse } from '../pages';
+import { PsError, type PsSession } from './session';
 
 const SESSION_CODES: readonly PsCode[] = ['SESSION_EXPIRED', 'NOT_AUTHORIZED'];
-const RETRYABLE: readonly PsCode[] = [...SESSION_CODES, 'TIMEOUT', 'UPSTREAM'];
+/** Failures that cost one page, not the whole sync. */
+const PER_PAGE: readonly PsCode[] = [...SESSION_CODES, 'TIMEOUT', 'UPSTREAM'];
 
 export async function syncPages(
-  userid: string, pwd: string, wanted: PageKey[] = PAGE_KEYS,
-  newSession = () => new PsSession(), emit: (e: ServerEvent) => void = () => {},
+  newSession: () => PsSession, userid: string, pwd: string, wanted: readonly PageKey[],
+  emit: (e: ServerEvent) => void = () => {},
 ): Promise<SyncResponse> {
   const pages: SyncResponse['pages'] = {};
   const errors: SyncResponse['errors'] = {};
@@ -31,30 +35,39 @@ export async function syncPages(
     }
   };
 
-  let pending = PAGE_KEYS.filter(k => wanted.includes(k));
+  let pending = [...wanted];
   for (let pass = 1; pass <= 2 && pending.length; pass++) {
     const ps = newSession();
-    await timed('SIGN_IN', { key: 'signin' }, () => ps.login(userid, pwd)); // BAD_CREDENTIALS ends everything
+    try {
+      await timed('SIGN_IN', { key: 'signin' }, () => ps.login(userid, pwd));
+    } catch (e) {
+      // The first sign-in decides the whole sync (a wrong password ends it).
+      // A second one failing must not lose the pages the first pass read.
+      if (pass === 1) throw e;
+      for (const key of pending) errors[key] ??= e instanceof PsError && PER_PAGE.includes(e.code) ? e.code : 'UPSTREAM';
+      break;
+    }
     const failed: PageKey[] = [];
-    for (const [i, key] of pending.entries()) {
-      try {
-        pages[key] = await timed(`PAGE ${key}`, { key: 'fetch', note: key }, () => ps.get(key));
-        delete errors[key];
-      } catch (e) {
-        if (!(e instanceof PsError) || !RETRYABLE.includes(e.code)) throw e;
-        errors[key] = e.code;
-        failed.push(key);
-        // The session is gone: asking for more pages in it only fails slower.
-        if (SESSION_CODES.includes(e.code)) {
-          failed.push(...pending.slice(i + 1));
+    try {
+      for (const [i, key] of pending.entries()) {
+        try {
+          pages[key] = await timed(`PAGE ${key}`, { key: 'fetch', note: key }, () => ps.get(key));
+          delete errors[key];
+        } catch (e) {
+          if (!(e instanceof PsError) || !PER_PAGE.includes(e.code)) throw e;
+          errors[key] = e.code;
+          if (!SESSION_CODES.includes(e.code)) continue;
+          // The session is gone: asking for more pages in it only fails slower.
+          failed.push(key, ...pending.slice(i + 1));
           break;
         }
       }
+    } finally {
+      const t0 = Date.now();
+      emit({ key: 'signout', status: 'start' });
+      await ps.logout();
+      emit({ key: 'signout', status: 'ok', ms: Date.now() - t0 });
     }
-    const t0 = Date.now();
-    emit({ key: 'signout', status: 'start' });
-    await ps.logout();
-    emit({ key: 'signout', status: 'ok', ms: Date.now() - t0 });
     pending = failed;
   }
   return { pages, errors, log, fetchedAt: new Date().toISOString() };

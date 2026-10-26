@@ -10,6 +10,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.0',
+    date: '2026-10-26',
+    items: {
+      ar: [
+        'إن غيّرت كلمة مرورك نسيها رعدٌ فورًا، فلا يُقفل حسابك بكلمةٍ قديمة.',
+        'لا يُقال لك إن محاضراتك حُذفت إن غيّرت الكلية صفحاتها: تبقى بياناتك.',
+        'رصيد الغياب أحذر: على أقصر فصلٍ محتمل، والأقلّ أحوط.',
+        'رعدٌ أخفّ على نظام الكلية: يقرأ ما حان وقته، ويستريح إن تعثّر النظام.',
+      ],
+      en: [
+        'If you change your password, Raad forgets the old one at once, so it cannot lock your account.',
+        'If the college changes its pages, you are not told your classes were removed: your data stays.',
+        'A more cautious absence budget: counted on the shortest likely term.',
+        'Raad is lighter on the college system: he reads what is due, and rests when it struggles.',
+      ],
+    },
+  },
+  {
     version: '1.0.0',
     date: '2026-10-25',
     items: {

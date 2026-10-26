@@ -1,6 +1,9 @@
 // Offline support. Raad's API is never cached here: student data lives in
-// the device store, sealed, written by the app itself.
-const VERSION = 'taleeb-v1';
+// the device store, sealed, written by the app itself. The build stamps a new
+// version (vite.config.ts), so each update replaces the old cache.
+const VERSION = 'taleeb-__BUILD__';
+/** A page that takes longer than this opens from the cache, then updates for next time. */
+const NAVIGATE_WAIT_MS = 3000;
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/avatars.json'];
 
 self.addEventListener('install', e => {
@@ -23,9 +26,16 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith('/api/')) return;
 
-  // Pages: network first, so updates arrive; the cached shell when offline.
+  // Pages: network first, so updates arrive; the cached shell when offline or
+  // when the network is too slow, so the app opens at once with what it has.
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).then(res => put('/', res)).catch(() => caches.match('/')));
+    const net = fetch(req).then(res => put('/', res));
+    e.waitUntil(net.catch(() => {}));
+    e.respondWith(new Promise(resolve => {
+      const timer = setTimeout(() => caches.match('/').then(hit => hit && resolve(hit)), NAVIGATE_WAIT_MS);
+      net.then(res => { clearTimeout(timer); resolve(res); })
+        .catch(() => { clearTimeout(timer); caches.match('/').then(hit => resolve(hit || Response.error())); });
+    }));
     return;
   }
   // Hashed build files never change: cache first.

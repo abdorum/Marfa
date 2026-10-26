@@ -3,12 +3,17 @@
 import type { Localized } from '../core/model';
 
 export interface ServerStatus {
-  /** The owner stopped Raad for everyone; syncs are refused until resumed. */
+  /** Raad refuses syncs: the owner stopped him, or he is resting (`auto`). */
   paused: boolean;
+  /** He rests on his own while the college struggles or refuses him, until `until`. */
+  auto?: boolean;
+  until?: string;
   /** Why, in the owner's words. */
   message?: Localized;
   /** An announcement shown to every student. */
   notice?: Localized;
+  /** The owner's choice of how old data may get before devices refresh it (exam weeks). */
+  staleMinutes?: number;
 }
 
 export interface RaadServer {

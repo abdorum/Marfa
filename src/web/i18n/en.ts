@@ -39,11 +39,17 @@ export const en: Strings = {
     errors: {
       CREDENTIALS: 'Wrong student ID or password.',
       LOCKED: 'Too many wrong attempts. Wait 15 minutes to protect your account.',
+      ACCOUNT: 'The college system refuses your account itself, not the password: it may be locked or its password expired. Use the official system or ask the college.',
+      COOLDOWN: 'The college system is struggling, so Raad rests a few minutes rather than add to it. Try again after.',
       PAUSED: 'Raad is paused right now. Come back later.',
       RATE_LIMIT: 'Too many requests. Wait a minute.',
       other: 'The college system is not responding. Try again shortly.',
     },
-    consent: (terms, privacy) => ['By signing in you agree to the ', terms, ' and the ', privacy, '.'],
+    consent: (institution, where, terms, privacy) => [
+      `I know this portal is a student project, not ${institution}’s; that my sign-in passes through Raad’s server${where ? ` in ${where.split(',')[0]}` : ''} and is then forgotten; and that the college may not approve of it. I agree to the `,
+      terms, ' and the ', privacy, '.',
+    ],
+    worried: 'If you are worried, change your password in the official system. We never ask for it in any chat.',
     terms: 'terms of use',
     privacy: 'privacy policy',
   },
@@ -105,7 +111,10 @@ export const en: Strings = {
       SESSION: 'The college system keeps ending the session.',
       RATE_LIMIT: 'Too many requests. Wait a little.',
       UNEXPECTED: 'The system returned something we did not expect.',
-      BLOCKED: 'The college firewall blocked Raad’s server.',
+      BLOCKED: 'The college firewall blocked Raad’s server, so he rests an hour.',
+      ACCOUNT: 'The college system refuses your account itself; check the official system.',
+      LOCKED: 'Too many wrong attempts, so Raad waits 15 minutes to protect your account.',
+      COOLDOWN: 'The college system is struggling, so Raad rests a few minutes rather than add to it.',
       PAUSED: 'Raad is paused right now.',
       CANCELLED: 'Stopped before it finished.',
     },
@@ -196,8 +205,13 @@ export const en: Strings = {
   attendance: {
     title: 'Absence',
     limit: n => `Limit ${n}%`,
-    left: n => (n === 0 ? 'Estimate: at or near the limit' : `Estimate: about ${plural(n, 'class', 'classes')} left before the limit`),
-    estimate: (total, allowed) => `About ${total} classes this term; the limit is ${allowed} of them. The college system is the record.`,
+    left: (n, most) => (n === 0
+      ? 'Estimate: at or near the limit'
+      : most
+        ? `Estimate: between ${n} and ${most} classes left before the limit; count on the lower`
+        : `Estimate: about ${plural(n, 'class', 'classes')} left before the limit`),
+    estimate: (total, allowed, endKnown) =>
+      `About ${total} classes this term; the limit is ${allowed} of them.${endKnown ? '' : ' The term’s end is unknown, so the shortest likely term is counted.'} The college system is the record.`,
     levels: { ok: 'Fine', warn: 'Careful', risk: 'Risk' },
     none: 'No absence recorded',
   },
@@ -310,7 +324,8 @@ export const en: Strings = {
   share: {
     title: 'Share card',
     mask: 'Hide personal details',
-    maskHint: 'Student ID, email and mobile',
+    maskHint: 'Student ID, email, mobile and advisor',
+    unofficial: 'Unofficial',
     share: 'Share',
     save: 'Save image',
     copy: 'Copy',

@@ -12,6 +12,7 @@ export function createSealer(store: KeyValueStore): Sealer {
 
   const key = async (create: boolean): Promise<CryptoKey | undefined> => {
     if (cached) return cached;
+    // A failed read throws (store.ts), so a new key is made only when there truly is none.
     const existing = await store.get<CryptoKey>(KEY);
     if (existing) return (cached = existing);
     if (!create) return undefined;

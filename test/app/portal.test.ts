@@ -58,6 +58,59 @@ function setup(o: { fail?: RaadError; server?: ServerStatus; store?: ReturnType<
 }
 
 describe('portal', () => {
+  it('forgets a saved password the college refused, so it is never sent again', async () => {
+    const store = memoryStore();
+    const first = setup({ store });
+    await first.portal.init();
+    await first.portal.signIn({ userid: '2000', pwd: 'old' }, true);
+    expect(store.map.has('credentials')).toBe(true);
+    // The student changed the password elsewhere; the saved one is now refused.
+    const later = setup({ store, fail: new RaadError('CREDENTIALS') });
+    await later.portal.init();
+    expect(later.portal.state.hasCredentials).toBe(true);
+    const job = await later.portal.sync();
+    expect(job.state).toBe('needs_input');
+    expect(later.live.calls).toEqual(['old']);
+    expect(store.map.has('credentials')).toBe(false);
+    expect(later.portal.state.hasCredentials).toBe(false);
+    // Opening the app again sends nothing.
+    later.portal.refreshIfStale();
+    await later.portal.sync().catch(() => undefined);
+    expect(later.live.calls).toEqual(['old', undefined]);
+    // The data stays on the device until the student signs in again.
+    expect(later.portal.state.snapshot?.courses.length).toBe(6);
+  });
+
+  it('on opening, reads only what is due', async () => {
+    const { portal } = setup();
+    await portal.init();
+    await portal.signIn({ userid: '2000', pwd: 'secret' }, false);
+    const areas: unknown[] = [];
+    const store = memoryStore();
+    const due = createPortal({
+      store, sealer: createSealer(store), institution: BMC, engine, online: () => true,
+      sourceFor: () => ({ manifest: { ...createDemoSource().manifest, id: 'fake' }, async sync(ctx) { areas.push(ctx.areas); return demoResult(NOW); } }),
+    });
+    await due.init();
+    await due.signIn({ userid: '2000', pwd: 'secret' }, false);
+    expect(areas).toEqual([undefined]); // signing in reads everything
+    due.refreshIfStale();
+    await new Promise(r => setTimeout(r, 0));
+    expect(areas).toHaveLength(1); // just fetched: nothing is due
+  });
+
+  it('after a failure of its own, does not try again by itself at once', async () => {
+    const { portal, live } = setup({ fail: new RaadError('UNEXPECTED', 'BLOCKED') });
+    await portal.init();
+    await portal.startDemo();
+    await portal.exitDemo();
+    expect(await portal.signIn({ userid: '2000', pwd: 'secret' }, false)).toBe('UNEXPECTED');
+    expect(live.calls).toHaveLength(1);
+    portal.refreshIfStale();
+    await new Promise(r => setTimeout(r, 0));
+    expect(live.calls).toHaveLength(1);
+  });
+
   it('starts with nobody signed in, the institution’s limit and the identity’s theme', async () => {
     const { portal } = setup();
     await portal.init();

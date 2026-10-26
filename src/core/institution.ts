@@ -22,4 +22,6 @@ export interface InstitutionProfile {
   timeZone: { id: string; offsetMinutes: number };
   /** Where Raad's server runs for this institution, for the student to know. */
   raadHome?: Required<Localized>;
+  /** For an institution read by the PeopleSoft adapter: where its system lives, and which allowlisted pages it has. */
+  peoplesoft?: { base: string; site: string; pages: readonly string[] };
 }

@@ -21,6 +21,25 @@ export function lines(doc: Document, id: string): string[] {
   return out.map(clean).filter(Boolean);
 }
 
+/** The page is not the one an extractor knows. */
+export class NotThisPage extends Error {
+  constructor(page: string) {
+    super(`landmarks of ${page} not found`);
+    this.name = 'NotThisPage';
+  }
+}
+
+/**
+ * Every extractor checks first that the page is the one it knows, by ids that
+ * are always there (Docs/10). When the college changes its pages, the result
+ * is an error, never an empty schedule taken for the truth.
+ */
+export function landmark(doc: Document, page: string, ids: string[], text?: RegExp): void {
+  if (ids.some(id => doc.getElementById(id))) return;
+  if (text && text.test(doc.body?.textContent ?? '')) return;
+  throw new NotThisPage(page);
+}
+
 /** Row indexes 0..n-1 for which `probeId(i)` exists. */
 export function rows(doc: Document, probeId: (i: number) => string): number[] {
   const out: number[] = [];

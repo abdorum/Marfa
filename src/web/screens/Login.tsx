@@ -10,8 +10,9 @@ import { navigate } from '../router';
 import { lastJob, portal, server, setPrefs } from '../state';
 import { Link, RaadAvatar, Spinner } from '../ui';
 
-// Remembering the password suits a personal phone, not a shared computer.
-const personalDevice = () => matchMedia('(display-mode: standalone), (pointer: coarse)').matches;
+// Remembering the password is offered ready only in the installed app, which
+// lives on the student's own phone; in a browser tab the student chooses.
+const installedApp = () => matchMedia('(display-mode: standalone)').matches;
 
 export function LoginForm({ onDone }: { onDone?: () => void }) {
   const t = strings.value.login;
@@ -32,7 +33,12 @@ export function LoginForm({ onDone }: { onDone?: () => void }) {
     }}>
       <label class="field">{t.userid}<input name="userid" inputMode="numeric" autoComplete="username" required disabled={busy} /></label>
       <label class="field">{t.password}<input name="pwd" type="password" autoComplete="current-password" required disabled={busy} /></label>
-      <label class="check"><input name="remember" type="checkbox" defaultChecked={personalDevice()} />{t.remember}</label>
+      <label class="check"><input name="remember" type="checkbox" defaultChecked={installedApp()} />{t.remember}</label>
+      {/* Consent is asked, never assumed: unticked, with the plain facts. */}
+      <label class="check consent">
+        <input name="consent" type="checkbox" required />
+        <span>{t.consent(INSTITUTION.name[lang.value], INSTITUTION.raadHome?.[lang.value], <Link href="/terms">{t.terms}</Link>, <Link href="/privacy">{t.privacy}</Link>)}</span>
+      </label>
       {busy && <RaadLine onCard />}
       {error && (
         <div class="alert-box" role="alert">
@@ -71,8 +77,8 @@ export function Login() {
       </section>
       <button class="btn glass demo" onClick={() => void portal.startDemo().then(() => navigate('/', { replace: true }))}>{t.login.demo}</button>
       <p class="legal-note">
-        {t.login.consent(<Link href="/terms">{t.login.terms}</Link>, <Link href="/privacy">{t.login.privacy}</Link>)}
-        <br />{t.unofficial(institution)}
+        {t.unofficial(institution)}
+        <br />{t.login.worried}
       </p>
     </main>
   );

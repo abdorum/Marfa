@@ -1,23 +1,42 @@
-// The PeopleSoft connector for Raad's server (raad/server/connector.ts).
-import type { EdgeConnector } from '../../../../../raad/server/connector';
-import { isPageKey, PAGE_KEYS } from '../pages';
-import { LOGIN_PAGE, USER_AGENT } from './session';
+// The PeopleSoft connector for Raad's server (src/ports/edge.ts). Where the
+// college system lives comes from the institution profile; how Raad introduces
+// himself comes from his server. Nothing here names an institution.
+import type { InstitutionProfile } from '../../../../core/institution';
+import type { ConnectorEnv, EdgeConnector } from '../../../../ports/edge';
+import { isPageKey, PAGE_KEYS, type PsConfig } from '../pages';
+import { PsSession } from './session';
 import { syncPages } from './sync';
 
-export const peoplesoftConnector: EdgeConnector = {
-  id: 'peoplesoft',
-  parts: PAGE_KEYS,
-  sync: (userid, pwd, parts, emit) => syncPages(userid, pwd, parts.filter(isPageKey), undefined, emit),
-  // Opens the sign-in page only; never signs in.
-  async health() {
-    try {
-      const res = await fetch(LOGIN_PAGE, { headers: { 'User-Agent': USER_AGENT }, redirect: 'manual' });
-      // Who refused: the sign-in page holds no personal data, so its start is safe to show.
-      const said = res.status === 200 ? undefined : (await res.text()).replace(/\s+/g, ' ').slice(0, 160);
-      const by = ['server', 'x-oracle-dms-ecid', 'x-azure-ref', 'x-cache', 'via'].filter(h => res.headers.has(h));
-      return { sis: res.status, reachable: res.status === 200, said, by };
-    } catch (e) {
-      return { sis: 0, reachable: false, error: (e as Error).name };
-    }
-  },
-};
+/** The profile's PeopleSoft settings as the session needs them. */
+export function psConfig(institution: InstitutionProfile, env: ConnectorEnv): PsConfig {
+  const ps = institution.peoplesoft;
+  if (!ps) throw new Error(`${institution.id} has no PeopleSoft settings`);
+  return {
+    base: ps.base,
+    site: ps.site,
+    timezoneOffset: String(-institution.timeZone.offsetMinutes),
+    userAgent: env.userAgent,
+    pages: PAGE_KEYS.filter(k => ps.pages.includes(k)),
+  };
+}
+
+export function createPeopleSoftConnector(config: PsConfig): EdgeConnector {
+  return {
+    id: 'peoplesoft',
+    parts: config.pages,
+    sync: (userid, pwd, parts, emit) =>
+      syncPages(() => new PsSession(config), userid, pwd, config.pages.filter(k => parts.filter(isPageKey).includes(k)), emit),
+    // Opens the sign-in page only; never signs in.
+    async health() {
+      try {
+        const res = await fetch(`${config.base}/psp/${config.site}/?cmd=login&languageCd=ENG&`, { headers: { 'User-Agent': config.userAgent }, redirect: 'manual' });
+        // Who refused: the sign-in page holds no personal data, so its start is safe to show.
+        const said = res.status === 200 ? undefined : (await res.text()).replace(/\s+/g, ' ').slice(0, 160);
+        const by = ['server', 'x-oracle-dms-ecid', 'x-azure-ref', 'x-cache', 'via'].filter(h => res.headers.has(h));
+        return { sis: res.status, reachable: res.status === 200, said, by };
+      } catch (e) {
+        return { sis: 0, reachable: false, error: (e as Error).name };
+      }
+    },
+  };
+}
