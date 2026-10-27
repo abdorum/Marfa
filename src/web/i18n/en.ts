@@ -221,13 +221,17 @@ export const en: Strings = {
   attendance: {
     title: 'Absence',
     limit: n => `Limit ${n}%`,
-    left: (n, most) => (n === 0
-      ? 'Estimate: at or near the limit'
-      : most
-        ? `Estimate: between ${n} and ${most} classes left before the limit; count on the lower`
-        : `Estimate: about ${plural(n, 'class', 'classes')} left before the limit`),
+    left: b => {
+      if (b.left === 0) return 'Estimate: at or near the limit';
+      const hrs = b.hoursLeft > b.left
+        ? ` (about ${b.hoursLeftAtMost && b.hoursLeftAtMost > b.hoursLeft ? `${b.hoursLeft} to ${b.hoursLeftAtMost}` : b.hoursLeft} hours)`
+        : '';
+      return b.leftAtMost && b.leftAtMost > 2
+        ? `You can miss between ${b.left} and ${b.leftAtMost} more days of this course${hrs}; count on the lower`
+        : `You can miss about ${plural(b.left, 'more day', 'more days')} of this course${hrs}`;
+    },
     estimate: (total, allowed, endKnown) =>
-      `About ${total} classes this term; the limit is ${allowed} of them.${endKnown ? '' : ' The term’s end is unknown, so the shortest likely term is counted.'} The college system is the record.`,
+      `About ${total} days of this course this term; the limit is ${allowed} of them.${endKnown ? '' : ' The term’s end is unknown, so the shortest likely term is counted.'} A day counts once, however many hours it has; the college system is the record.`,
     levels: { ok: 'Fine', warn: 'Careful', risk: 'Risk' },
     none: 'No absence recorded',
   },

@@ -109,19 +109,31 @@ describe('attendance', () => {
     expect(attendanceLevel(20, 25)).toBe('risk');
   });
 
-  it('estimates the classes left before the limit, cautiously when the term end is unknown', () => {
-    // Human Biology: lecture Sun+Tue and lab Mon = 3 a week. No term end, so
-    // 16 - 3 quiet weeks = 13 weeks = 39 classes, and 48 at the usual length.
+  it('estimates the days of the course left before the limit, cautiously when the term end is unknown', () => {
+    // Human Biology: lecture Sun+Tue (1.5 h, counted 2) and lab Mon (2 h) = 3 days
+    // and 6 hours a week. No term end, so 16 - 3 quiet weeks = 13 weeks = 39 days,
+    // and 48 at the usual length.
     const noEnd = { ...snap, terms: snap.terms.map(t => ({ ...t, end: undefined })) };
     const b = absenceBudget(noEnd, 'PYBIO 101', 12, 25, 16)!;
-    expect(b).toEqual({ perWeek: 3, weeks: 13, total: 39, allowed: 9, used: 5, left: 4, endKnown: false, leftAtMost: 6 });
+    expect(b).toEqual({
+      perWeek: 3, hoursPerWeek: 6, weeks: 13, total: 39, allowed: 9, used: 5, left: 4, hoursLeft: 10,
+      endKnown: false, leftAtMost: 6, hoursLeftAtMost: 12,
+    });
     expect(absenceBudget(snap, 'NOPE 000', 0, 25, 16)).toBeUndefined();
   });
 
   it('counts the real term when its dates are known', () => {
     const b = absenceBudget(snap, 'PYBIO 101', 21, 25, 16)!;
-    expect(b).toMatchObject({ weeks: 16, total: 48, allowed: 12, used: 10, left: 2, endKnown: true });
+    expect(b).toMatchObject({ weeks: 16, total: 48, allowed: 12, used: 10, left: 2, hoursLeft: 4, endKnown: true });
     expect(b.leftAtMost).toBeUndefined();
+  });
+
+  it('counts a day of hour-long classes as one day, not one class an hour', () => {
+    // Four one-hour classes, Sunday to Wednesday: 4 days and 16 hours a week.
+    const hour = (start: number) => ({ days: [0, 1, 2, 3], start, end: start + 60 });
+    const s: Snapshot = { ...snap, sections: [...snap.sections, { courseKey: 'PYENG 101', termCode: '2701', section: 'X', component: 'LEC', meetings: [hour(960), hour(1020), hour(1080), hour(1140)] }] };
+    const b = absenceBudget(s, 'PYENG 101', 3, 25, 16)!;
+    expect(b).toMatchObject({ perWeek: 4, hoursPerWeek: 16, total: 64, allowed: 16, used: 2, left: 14, hoursLeft: 56 });
   });
 });
 

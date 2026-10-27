@@ -2,6 +2,9 @@
 // (Docs/06-design-system.md: «الكتابة»). ما يأتي من نظام المؤسسة يُعرض كما هو.
 import type { ComponentChildren } from 'preact';
 
+/** Days of a course left before the absence limit, and the same in class hours. */
+export interface AbsenceLeft { left: number; leftAtMost?: number; hoursLeft: number; hoursLeftAtMost?: number }
+
 /** Arabic counting: 1, 2, 3–10, 11 and up take different forms. */
 export function count(n: number, one: string, two: string, few: string, many: string): string {
   if (n === 1) return one;
@@ -245,13 +248,17 @@ export const ar = {
   attendance: {
     title: 'الغياب',
     limit: (n: number) => `الحدّ ${n}%`,
-    left: (n: number, most?: number) => (n === 0
-      ? 'تقديرًا: بلغت الحدّ أو كدت'
-      : most
-        ? `تقديرًا: يبقى لك ما بين ${n} و${most} من المحاضرات قبل الحدّ، والأقلّ أحوط`
-        : `تقديرًا: يبقى لك ${count(n, 'محاضرةٌ واحدة', 'محاضرتان', 'محاضرات', 'محاضرة')} قبل الحدّ`),
+    left: (b: AbsenceLeft) => {
+      if (b.left === 0) return 'تقديرًا: بلغت الحدّ أو كدت';
+      const hrs = b.hoursLeft > b.left
+        ? ` (قرابة ${b.hoursLeftAtMost && b.hoursLeftAtMost > b.hoursLeft ? `${b.hoursLeft} إلى ${count(b.hoursLeftAtMost, 'ساعة', 'ساعتين', 'ساعات', 'ساعة')}` : count(b.hoursLeft, 'ساعة', 'ساعتين', 'ساعات', 'ساعة')})`
+        : '';
+      return b.leftAtMost && b.leftAtMost > 2
+        ? `لديك ما بين ${b.left} و${count(b.leftAtMost, 'يوم', 'يومين', 'أيام', 'يومًا')} لتغيب من أيام المادة${hrs}، والأقلّ أحوط`
+        : `لديك نحو ${count(b.left, 'يومٍ واحد', 'يومين', 'أيام', 'يومًا')} لتغيب من أيام المادة${hrs}`;
+    },
     estimate: (total: number, allowed: number, endKnown: boolean) =>
-      `تُقدَّر محاضرات المادة في الفصل بـ${total}، والحدّ ${allowed} منها.${endKnown ? '' : ' ولأنّ آخر الفصل لا يُعرف، حُسبت على أقصر فصلٍ محتمل.'} والمرجع نظام الكلية.`,
+      `تُقدَّر أيام المادة في الفصل بـ${total}، والحدّ ${allowed} منها.${endKnown ? '' : ' ولأنّ آخر الفصل لا يُعرف، حُسبت على أقصر فصلٍ محتمل.'} ويُعدّ اليوم واحدًا أيًّا كانت ساعاته، والمرجع نظام الكلية.`,
     levels: { ok: 'سليم', warn: 'انتبه', risk: 'خطر' } as Record<string, string>,
     none: 'لم يُرصد غياب',
   },
