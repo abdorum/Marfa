@@ -13,7 +13,7 @@ export interface LegalDoc {
 const privacyAr: LegalDoc = {
   title: 'سياسة الخصوصية',
   sections: [
-    { h: 'من نحن', p: ['بوابة معلومات الطالب مشروعٌ طلابيٌّ فرديٌّ مجاني، ليس تابعًا لكلية البترجي الطبية ولا معتمدًا منها. والتواصل عبر قناة تيليجرام: t.me/ItsProf11'] },
+    { h: 'من نحن', p: ['بوابة معلومات الطالب مشروعٌ طلابيٌّ فرديٌّ مجانيٌّ مستقلّ، لا يتبع أيّ جامعةٍ أو كليةٍ أو جهةٍ رسمية، ولا هو معتمدٌ منها. والتواصل عبر قناة تيليجرام: t.me/ItsProf11', 'والمراد بالكلية في هذه السياسة: الجامعة أو الكلية التي تختارها في صفحة الدخول، وبنظامها: نظام معلومات الطلاب فيها.'] },
     {
       h: 'البيانات التي نعالجها',
       p: [
@@ -25,7 +25,7 @@ const privacyAr: LegalDoc = {
     {
       h: 'كيف تُعالج',
       p: [
-        'عند التحديث يسجّل رعدٌ دخولك في نظام الكلية عبر خادمٍ على Cloudflare في أمستردام بهولندا، بجوار خوادم نظام الكلية نفسه، ثم يعيد الصفحات إلى جهازك عبر اتصالٍ مشفّر، ويخرج من النظام.',
+        'عند التحديث يسجّل رعدٌ دخولك في نظام الكلية عبر خادمٍ على Cloudflare في أمستردام بهولندا، ثم يعيد الصفحات إلى جهازك عبر اتصالٍ مشفّر، ويخرج من النظام.',
         'تُقرأ الصفحات وتُستخرج منها بياناتك على جهازك وحده.',
         'والأداة للعرض فقط: لا تكتب في نظام الكلية شيئًا، ولا تنفّذ عنك إجراءً.',
       ],
@@ -65,7 +65,7 @@ const privacyAr: LegalDoc = {
       h: 'إحصاءات جهازك',
       p: ['معطّلةٌ افتراضيًا. إن فعّلتها من الإعدادات أرسل جهازك عن كل تحديث: نتيجته، وعدد محاولاته، ومدته، ورقم الإصدار. بلا رقمٍ جامعيٍّ ولا عنوان IP، وتُحذف بعد 3 أشهر.'],
     },
-    { h: 'النقل خارج المملكة', p: ['المعالجة اللحظية تجري في هولندا، حيث تستضيف الكلية نظامها، تنفيذًا لطلبك بعرض بياناتك. والإحصاء المذكور أعلاه محفوظٌ داخل الاتحاد الأوروبي.'] },
+    { h: 'النقل خارج المملكة', p: ['المعالجة اللحظية تجري في هولندا، تنفيذًا لطلبك بعرض بياناتك. والإحصاء المذكور أعلاه محفوظٌ داخل الاتحاد الأوروبي.'] },
     {
       h: 'الأساس والموافقة',
       p: [
@@ -89,7 +89,7 @@ const privacyAr: LegalDoc = {
 const privacyEn: LegalDoc = {
   title: 'Privacy policy',
   sections: [
-    { h: 'Who we are', p: ['Taleeb Portal is a free, individual student project. It is not affiliated with or endorsed by Batterjee Medical College. Contact: Telegram t.me/ItsProf11'] },
+    { h: 'Who we are', p: ['Taleeb Portal is a free, independent, individual student project. It is not affiliated with or endorsed by any university, college or official body. Contact: Telegram t.me/ItsProf11', 'In this policy, the college means the university or college you choose on the sign-in page, and the college system its student information system.'] },
     {
       h: 'What we process',
       p: [
@@ -101,7 +101,7 @@ const privacyEn: LegalDoc = {
     {
       h: 'How',
       p: [
-        'When you refresh, Raad signs you in to the college system from a Cloudflare server in Amsterdam, the Netherlands, next to the college system\'s own servers, returns the pages to your device over an encrypted connection, and signs out.',
+        'When you refresh, Raad signs you in to the college system from a Cloudflare server in Amsterdam, the Netherlands, returns the pages to your device over an encrypted connection, and signs out.',
         'The pages are read and your data extracted on your device only.',
         'The tool only shows: it writes nothing to the college system and performs no action for you.',
       ],
@@ -141,7 +141,7 @@ const privacyEn: LegalDoc = {
       h: 'Your device\'s statistics',
       p: ['Off by default. If you turn them on in Settings, your device sends for each refresh: its outcome, attempts, duration and the app version. No student ID and no IP address. Deleted after 3 months.'],
     },
-    { h: 'Transfer outside the Kingdom', p: ['The momentary processing happens in the Netherlands, where the college hosts its system, to carry out your request to see your data. The statistics above are kept inside the European Union.'] },
+    { h: 'Transfer outside the Kingdom', p: ['The momentary processing happens in the Netherlands, to carry out your request to see your data. The statistics above are kept inside the European Union.'] },
     {
       h: 'Basis and consent',
       p: [
@@ -165,7 +165,7 @@ const privacyEn: LegalDoc = {
 const termsAr: LegalDoc = {
   title: 'شروط الاستخدام',
   sections: [
-    { h: 'ما هذه الأداة', p: ['أداةٌ مجانيةٌ غير رسمية تعرض بياناتك من نظام معلومات الطلاب في كلية البترجي الطبية عرضًا أوضح. ليست تابعةً للكلية ولا معتمدةً منها.'] },
+    { h: 'ما هذه الأداة', p: ['أداةٌ مجانيةٌ غير رسمية تعرض بياناتك من نظام معلومات الطلاب في كليتك عرضًا أوضح. لا تتبع أيّ جامعةٍ أو كليةٍ أو جهةٍ رسمية، ولا هي معتمدةٌ منها.'] },
     { h: 'للعرض فقط', p: ['لا تنفّذ الأداة أي إجراء: لا تسجيل مادة ولا حذفها، ولا دفع، ولا رفع طلب. ذلك كلّه في النظام الرسمي.'] },
     { h: 'المرجع الرسمي', p: ['نظام الكلية هو المرجع وحده. قد تتأخر الأداة أو تخطئ في قراءة البيانات، وما تقدّره من رصيد الغياب تقديرٌ لا سجلّ؛ فتحقّق من النظام الرسمي قبل أي قرارٍ مهم، كالغياب والدرجات ومواعيد الاختبارات.'] },
     {
@@ -187,7 +187,7 @@ const termsAr: LegalDoc = {
 const termsEn: LegalDoc = {
   title: 'Terms of use',
   sections: [
-    { h: 'What this is', p: ['A free, unofficial tool that shows your data from the Batterjee Medical College student information system more clearly. It is not affiliated with or endorsed by the college.'] },
+    { h: 'What this is', p: ['A free, unofficial tool that shows your data from your college\'s student information system more clearly. It is not affiliated with or endorsed by any university, college or official body.'] },
     { h: 'Read only', p: ['The tool performs no action: no enrolling or dropping a course, no payments, no requests. All of that stays in the official system.'] },
     { h: 'The official record', p: ['The college system is the only official record. The tool may lag or misread data, and its absence estimates are estimates, not records; check the official system before any important decision, such as absences, grades or exam times.'] },
     {
