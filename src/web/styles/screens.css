@@ -129,7 +129,8 @@
 .wk-block {
   position: absolute;
   inset-block-start: calc((var(--s) - var(--from)) / 60 * var(--hour));
-  block-size: calc((var(--e) - var(--s)) / 60 * var(--hour));
+  /* A short class still shows its name and time: never less than two lines. */
+  block-size: max(calc((var(--e) - var(--s)) / 60 * var(--hour)), 34px);
   inset-inline-start: calc(var(--lane) / var(--lanes) * 100%);
   inline-size: calc(100% / var(--lanes));
   padding: 1.5px;

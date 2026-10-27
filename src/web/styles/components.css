@@ -200,6 +200,8 @@ a.lrow:active, button.lrow:active { filter: brightness(.97); }
 /* ---------- Stats ---------- */
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .stats.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* A card of tiles alone, with no head above them, needs its own top margin. */
+.stats.card { padding-block-start: 14px; }
 .stat { background: transparent; box-shadow: inset 0 0 0 1px var(--line); border-radius: var(--r-inner); padding: 8px 10px 7px; display: grid; gap: 0; min-inline-size: 0; }
 .stat b { font: 300 24px/1.2 var(--font-figure); direction: ltr; text-align: start; unicode-bidi: plaintext; }
 .stat span { font-size: 11.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
