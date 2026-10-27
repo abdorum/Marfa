@@ -48,7 +48,7 @@ function ratio(fgName: string, bgName: string, vars: Record<string, string>): nu
 
 /** Text on its ground: 4.5:1. */
 const TEXT: [string, string][] = [
-  ['ink', 'surface'], ['ink-2', 'surface'], ['ink-3', 'surface'], ['ink', 'surface-2'], ['ink-2', 'surface-2'],
+  ['ink', 'surface'], ['ink-2', 'surface'], ['ink-3', 'surface'], ['ink', 'surface-2'], ['ink-2', 'surface-2'], ['ink', 'surface-3'],
   ['on-bar', 'bar'], ['on-bar-2', 'bar'], ['on-bg', 'bg-solid'], ['on-bg-2', 'bg-solid'],
   ['accent', 'surface'], ['dock-ink', 'surface'], ['on-highlight', 'highlight'],
   ['ok-ink', 'surface'], ['warn-ink', 'surface'], ['risk-ink', 'surface'],

@@ -24,53 +24,46 @@ type CardFn = (p: { index: number }) => JSX.Element | null;
 
 // ---------- Now and next ----------
 
-/** A clock face: the lit arc is the minutes counted down, up to an hour. */
-function Dial({ min }: { min?: number }) {
-  const ticks = Array.from({ length: 60 }, (_, i) => {
-    const a = (i * Math.PI) / 30;
-    const l = i % 5 ? 4 : 9;
-    return <line x1={60 + 52 * Math.sin(a)} y1={60 - 52 * Math.cos(a)} x2={60 + (52 - l) * Math.sin(a)} y2={60 - (52 - l) * Math.cos(a)} stroke="currentColor" stroke-width={i % 5 ? 0.8 : 1.4} />;
-  });
-  const v = min == null ? 0 : Math.min(1, min / 60);
-  const end = 2 * Math.PI * v;
-  const arc = v >= 1
-    ? <circle cx="60" cy="60" r="34" fill="none" stroke="var(--highlight)" stroke-width="7" />
-    : v > 0 && <path d={`M60 26A34 34 0 ${v > 0.5 ? 1 : 0} 1 ${60 + 34 * Math.sin(end)} ${60 - 34 * Math.cos(end)}`} fill="none" stroke="var(--highlight)" stroke-width="7" />;
+/**
+ * The timer: a thin ring with a lit arc for what is left, round a sunken panel
+ * of figures split by fine rules, each with its word beneath.
+ */
+function Timer({ parts, frac, small }: { parts: [number, string][]; frac?: number; small?: boolean }) {
+  const v = frac == null ? 0 : Math.min(1, Math.max(0, frac));
+  const r = 94;
+  const len = 2 * Math.PI * r;
   return (
-    <svg class="dial" viewBox="0 0 120 120">
-      <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="1" />
-      {ticks}
-      <circle cx="60" cy="60" r="34" fill="none" stroke="currentColor" stroke-width=".8" stroke-dasharray="2 3" />
-      {arc}
-      <path d={`M60 60L${60 + 40 * Math.sin(end)} ${60 - 40 * Math.cos(end)}`} stroke="currentColor" stroke-width="2" />
-      <circle cx="60" cy="60" r="3.5" fill="currentColor" />
-    </svg>
+    <div class={`timer${small ? ' small' : ''}`} aria-hidden="true">
+      <svg viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r={r} class="track" />
+        {v > 0 && <circle cx="100" cy="100" r={r} class="arc" stroke-dasharray={`${len * v} ${len}`} transform="rotate(-90 100 100)" />}
+      </svg>
+      <div class="timer-face">
+        <div class="timer-panel">
+          {parts.map(([n], i) => <>{i > 0 && <i class="sep" />}<b>{String(n).padStart(2, '0')}</b></>)}
+        </div>
+        <div class="timer-words">{parts.map(([, w]) => <span>{w}</span>)}</div>
+      </div>
+    </div>
   );
 }
 
-function Countdown({ min }: { min: number }) {
-  const t = strings.value.now;
-  const hours = min >= 60;
-  const n = hours ? Math.floor(min / 60) : Math.max(1, min);
+/** Seconds from now to `minute` of today. */
+const secondsTo = (minute: number, now: Date) => Math.max(0, minute * 60 - (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()));
+
+function Countdown({ sec, frac }: { sec: number; frac: number }) {
+  const t = strings.value.now.parts;
   return (
-    <div class="nn-count" aria-hidden="true">
-      <Dial min={min} />
-      <span class="num">
-        <span class="big">{hours ? `${n}:${String(min % 60).padStart(2, '0')}` : n}</span>
-        <small>{t.unit(n, hours)}</small>
-      </span>
+    <div class="nn-count">
+      <Timer frac={frac} parts={[[Math.floor(sec / 3600), t.hours], [Math.floor((sec % 3600) / 60), t.minutes], [sec % 60, t.seconds]]} />
     </div>
   );
 }
 
 function DayBox({ date }: { date: Date }) {
   return (
-    <div class="nn-count" aria-hidden="true">
-      <Dial />
-      <span class="num">
-        <span class="big">{date.getDate()}</span>
-        <small>{dayName(date.getDay())}</small>
-      </span>
+    <div class="nn-count">
+      <Timer parts={[[date.getDate(), dayName(date.getDay())]]} />
     </div>
   );
 }
@@ -97,11 +90,12 @@ const Heading = ({ m }: { m: MeetingView }) => (
 export const NowNextCard: CardFn = ({ index }) => {
   const s = snapshot.value!;
   const t = strings.value.now;
-  useTick(30_000);
   const now = new Date();
   const nn = nowAndNext(s, now);
   const cur = nn.current[0];
   const next = nn.next;
+  // Seconds tick only while a timer is on the card.
+  useTick(cur || next?.today ? 1000 : 30_000);
 
   return (
     <Card id="now" title={t.title} index={index} tone="night" hud>
@@ -112,7 +106,7 @@ export const NowNextCard: CardFn = ({ index }) => {
               <div class="chips"><span class="chip lime"><i class="pulse" />{t.now}</span>{nn.current.length > 1 && <span class="chip risk">{t.clash}</span>}</div>
               <Heading m={cur} />
             </div>
-            <Countdown min={cur.leftMin} />
+            <Countdown sec={secondsTo(cur.end, now)} frac={1 - cur.pct} />
           </div>
           <p class="label">{t.ends(cur.leftMin)}</p>
           <div class="nn-bar" style={{ '--p': cur.pct }}><i /></div>
@@ -137,7 +131,7 @@ export const NowNextCard: CardFn = ({ index }) => {
               </div>
               <Heading m={next.meeting} />
             </div>
-            {next.today ? <Countdown min={next.inMin} /> : <DayBox date={next.date} />}
+            {next.today ? <Countdown sec={secondsTo(next.meeting.start, now)} frac={Math.min(1, next.inMin / 60)} /> : <DayBox date={next.date} />}
           </div>
           {next.today && <p class="label">{t.starts(next.inMin)}</p>}
           <Room room={next.meeting.room} />
@@ -401,10 +395,7 @@ export const ExamsCard: CardFn = ({ index }) => {
       {first ? (
         <>
           <div class="exam-hero" style={{ '--c': courseColor(first.courseKey) }}>
-            <div class="nn-count light">
-              <span class="big">{daysBetween(now, fromIsoDate(first.date))}</span>
-              <small>{t.unit(daysBetween(now, fromIsoDate(first.date)))}</small>
-            </div>
+            <Timer small parts={[[daysBetween(now, fromIsoDate(first.date)), t.unit(daysBetween(now, fromIsoDate(first.date)))]]} />
             <div class="exam-what">
               <b><bdi>{courseTitle(s, first.courseKey)}</bdi></b>
               <span class="label">{dateLabel(fromIsoDate(first.date))}{first.start != null && <> · <bdi>{timeRange(first.start, first.end)}</bdi></>}</span>

@@ -195,7 +195,7 @@ export const ar = {
     noRoom: 'لم تُحدَّد القاعة',
     clash: 'تعارض',
     /** The big countdown: minutes under an hour, else hours. */
-    unit: (n: number, isHours: boolean) => (isHours ? unit(n, 'ساعة', 'ساعتان', 'ساعات', 'ساعة') : unit(n, 'دقيقة', 'دقيقتان', 'دقائق', 'دقيقة')),
+    parts: { hours: 'ساعات', minutes: 'دقائق', seconds: 'ثوانٍ' },
   },
 
   today: { title: 'محاضرات اليوم', empty: 'لا محاضرات اليوم', all: 'الجدول كاملًا' },
@@ -270,7 +270,7 @@ export const ar = {
     title: 'الاختبارات القادمة',
     empty: 'لم تُعلن مواعيد الاختبارات بعد',
     in: (d: number) => (d === 0 ? 'اليوم' : d === 1 ? 'غدًا' : `بعد ${days(d)}`),
-    unit: (d: number) => unit(d, 'يوم', 'يومان', 'أيام', 'يومًا'),
+    unit: (d: number) => (d === 0 ? 'اليوم' : unit(d, 'يوم', 'يومان', 'أيام', 'يومًا')),
   },
 
   notice: { title: 'إعلان' },

@@ -17,11 +17,13 @@ export const CHANGELOG: ChangelogEntry[] = [
         'في وسط الشريط صورتك، تفتح «مساحتي»: هويتك وتحصيلك، والعُدّة، والأوسمة.',
         'العُدّة اختصاراتٌ تحتاجها كثيرًا: رابط، أو نصّ، أو صورة، أو عدٌّ تنازليّ. على جهازك وحده، وتشاركها كما هي.',
         'رعد في «المزيد»، والتحديث بيدك متاحٌ كل نصف ساعة، رفقًا بخادمه.',
+        'مؤقّتٌ جديد في «الآن والتالي» يعدّ بالثواني.',
       ],
       en: [
         'Your picture in the middle of the bar opens My space: your identity and standing, your kit, and your badges.',
         'The kit holds shortcuts you reach for often: a link, a note, a picture or a countdown. On your device only, and shared as they are.',
         'Raad is in More, and a refresh by hand is open every half hour, to spare his server.',
+        'A new timer in Now and next, counting the seconds.',
       ],
     },
   },

@@ -27,7 +27,7 @@ async function copy(text: string) {
 export async function shareItem(item: KitItem): Promise<void> {
   try {
     if (item.kind === 'image') {
-      const file = await dataUrlFile(item.value, item.name);
+      const file = dataUrlFile(item.value, item.name);
       if (navigator.canShare?.({ files: [file] })) return await navigator.share({ files: [file], title: item.name });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(file);

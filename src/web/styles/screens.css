@@ -88,18 +88,36 @@
 .nn-sub { font-size: 13px; color: var(--ink-2); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-block-start: 2px; }
 .nn-count {
   order: -1;
-  display: flex; align-items: center; justify-content: center; gap: 18px;
+  display: grid; place-items: center;
   margin-inline: -14px; margin-block-start: -12px;
-  min-block-size: 132px; padding: 12px;
+  padding: 16px 12px;
   background-color: var(--surface-2);
   background-image: linear-gradient(color-mix(in srgb, var(--ink) 7%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--ink) 7%, transparent) 1px, transparent 1px);
   background-size: 14px 14px;
   border-block-end: 1px solid var(--line);
 }
-.nn-count .dial { inline-size: 96px; block-size: 96px; color: var(--ink); flex: none; }
-.nn-count .num { display: grid; justify-items: start; }
-.nn-count .big { font-size: 56px; color: var(--ink); display: block; }
-.nn-count small { font-size: 12.5px; color: var(--ink-2); }
+/* The timer: a thin ring, a lit arc for what is left, a sunken panel of figures. */
+.timer { position: relative; inline-size: min(236px, 70vw); aspect-ratio: 1; display: grid; place-items: center; }
+.timer svg { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; }
+.timer .track { fill: none; stroke: color-mix(in srgb, var(--highlight) 55%, var(--ink-3)); stroke-width: 1.5; }
+.timer .arc { fill: none; stroke: var(--highlight); stroke-width: 5; stroke-linecap: round; }
+.timer-face { display: grid; gap: 6px; inline-size: 84%; }
+/* Figures run left to right in both languages, as on any clock. */
+.timer-panel { direction: ltr; display: flex; align-items: center; justify-content: center; padding: 6px 8px; background: var(--surface-3); border-radius: 6px; box-shadow: inset 0 2px 5px rgb(0 0 0 / 14%); }
+.timer-panel b { flex: 1; text-align: center; font: 400 38px/1.2 var(--font-figure); color: var(--ink); font-variant-numeric: tabular-nums; }
+.timer-panel .sep { position: relative; inline-size: 1px; align-self: stretch; margin-block: 4px; background: color-mix(in srgb, var(--highlight) 70%, transparent); }
+.timer-panel .sep::before, .timer-panel .sep::after { content: ''; position: absolute; inset-inline-start: -3px; inline-size: 7px; block-size: 7px; border-radius: 50%; background: var(--ink); }
+.timer-panel .sep::before { inset-block-start: calc(50% - 10px); }
+.timer-panel .sep::after { inset-block-start: calc(50% + 3px); }
+.timer-words { direction: ltr; display: flex; }
+.timer-words span { flex: 1; text-align: center; font-size: 11.5px; color: var(--ink-2); letter-spacing: .02em; }
+.timer.small { inline-size: 96px; flex: none; }
+.timer.small .timer-face { inline-size: 70%; gap: 3px; }
+.timer.small .timer-panel { padding: 2px 4px; border-radius: 4px; }
+.timer.small .timer-panel b { font-size: 26px; }
+.timer.small .timer-words span { font-size: 10.5px; }
+.timer.small .track { stroke-width: 3; }
+
 .nn-room { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-block-start: 1px solid color-mix(in srgb, var(--line) 70%, transparent); padding-block-start: 8px; }
 .nn-room small { font-size: 12.5px; color: var(--ink-2); }
 .nn-room svg { color: var(--ink-2); }
@@ -291,9 +309,6 @@ a.ring-tile:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); 
 .exam-hero { display: flex; gap: 14px; align-items: center; padding: 12px; background: color-mix(in srgb, var(--c) 12%, var(--surface)); border-inline-start: 4px solid var(--c); }
 .exam-what { display: grid; gap: 2px; min-inline-size: 0; }
 .exam-what b { font-size: 15px; font-weight: 500; }
-/* The exam countdown: a framed number, not the hero's screen. */
-.nn-count.light { order: 0; margin: 0; min-block-size: 0; min-inline-size: 78px; padding: 8px 10px; display: grid; justify-items: center; gap: 0; background: var(--surface); background-image: none; border: 0; box-shadow: inset 0 0 0 1px var(--ink), 0 0 0 3px var(--surface), 0 0 0 4px var(--line); }
-.nn-count.light .big { font-size: 40px; }
 
 /* ---------- Welcome art ---------- */
 .stack-art .art { position: absolute; }

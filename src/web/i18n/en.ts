@@ -171,7 +171,7 @@ export const en: Strings = {
     room: 'Room',
     noRoom: 'Room not set',
     clash: 'Clash',
-    unit: (n, isHours) => (isHours ? (n === 1 ? 'hour' : 'hours') : n === 1 ? 'minute' : 'minutes'),
+    parts: { hours: 'Hours', minutes: 'Minutes', seconds: 'Seconds' },
   },
 
   today: { title: 'Today’s classes', empty: 'No classes today', all: 'Full schedule' },
@@ -246,7 +246,7 @@ export const en: Strings = {
     title: 'Coming exams',
     empty: 'Exam times not announced yet',
     in: d => (d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : `In ${d} days`),
-    unit: d => (d === 1 ? 'day' : 'days'),
+    unit: d => (d === 0 ? 'today' : d === 1 ? 'day' : 'days'),
   },
 
   notice: { title: 'Announcement' },

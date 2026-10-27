@@ -27,7 +27,12 @@ export async function fitImage(file: Blob, o: { max: number; bytes: number; squa
   return undefined;
 }
 
-export async function dataUrlFile(url: string, name: string): Promise<File> {
-  const blob = await (await fetch(url)).blob();
-  return new File([blob], `${name.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'image'}.jpg`, { type: blob.type || 'image/jpeg' });
+/** A kept picture as a file to share. Decoded here, not fetched: the site's CSP allows no data: in connect-src. */
+export function dataUrlFile(url: string, name: string): File {
+  const [head = '', body = ''] = url.split(',');
+  const type = /^data:([^;]+);base64$/.exec(head)?.[1] ?? 'image/jpeg';
+  const bin = atob(body);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new File([bytes], `${name.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'image'}.jpg`, { type });
 }
