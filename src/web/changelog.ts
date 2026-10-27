@@ -17,11 +17,13 @@ export const CHANGELOG: ChangelogEntry[] = [
         'إن لم تجد كليتك في القائمة فاطلبها من صفحة الدخول، ويُبنى للأكثر طلبًا أولًا.',
         'تبويب رعد صار أخفّ: حاله وسجلّه. وتعريفه وطريقة عمله في «عن البوابة».',
         'صفحة الدخول أوجز، والموافقة في سطرٍ واحد.',
+        'شعارٌ جديد للبوابة، وصورةٌ جديدة لرعد.',
       ],
       en: [
         'If your college is not in the list, ask for it from the sign-in page; the most asked-for come first.',
         'The Raad tab is lighter: his state and log. Who he is and how he works are in About.',
         'A shorter sign-in page, with consent in one line.',
+        'A new logo for the portal, and a new picture for Raad.',
       ],
     },
   },

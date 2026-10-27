@@ -1,0 +1,47 @@
+// A headless Edge or Chrome that takes screenshots of a page (tools/og.mjs,
+// tools/make-icons.mjs). Pass the browser's path if it is not in the usual place.
+import { spawn } from 'node:child_process';
+import { existsSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const candidates = [
+  process.argv[2],
+  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+  'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/usr/bin/google-chrome',
+  '/usr/bin/chromium',
+];
+
+export const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+export async function openBrowser() {
+  const browser = candidates.find(p => p && existsSync(p));
+  if (!browser) throw new Error('No Edge or Chrome found: pass its path.');
+  const port = 9300 + Math.floor(Math.random() * 500);
+  const proc = spawn(browser, ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${mkdtempSync(join(tmpdir(), 'og-'))}`, '--hide-scrollbars', '--allow-file-access-from-files', 'about:blank']);
+  let page;
+  for (let i = 0; i < 60 && !page; i++) {
+    try { page = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find(t => t.type === 'page'); } catch { await sleep(250); }
+  }
+  const ws = new WebSocket(page.webSocketDebuggerUrl);
+  await new Promise(r => ws.addEventListener('open', r));
+  let id = 0;
+  const waiting = new Map();
+  ws.addEventListener('message', e => { const m = JSON.parse(e.data); waiting.get(m.id)?.(m); waiting.delete(m.id); });
+  const send = (method, params = {}) => new Promise(r => { waiting.set(++id, r); ws.send(JSON.stringify({ id, method, params })); });
+
+  /** Opens `url` at width×height and returns a PNG of it. */
+  async function shoot(url, width, height, transparent = false) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+    if (transparent) await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+    await send('Page.navigate', { url });
+    await sleep(1500);
+    await send('Runtime.evaluate', { expression: 'document.fonts.ready', awaitPromise: true });
+    const shot = await send('Page.captureScreenshot', { format: 'png', clip: { x: 0, y: 0, width, height, scale: 1 } });
+    return Buffer.from(shot.result.data, 'base64');
+  }
+
+  return { shoot, close: () => { ws.close(); proc.kill(); } };
+}
