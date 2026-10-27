@@ -161,7 +161,6 @@ export type Change = { id: string; at: string } & (
   | { kind: 'gpa'; from?: number; to: number }
 );
 
-export type ChangeKind = Change['kind'];
 
 export interface Snapshot {
   schemaVersion: typeof SCHEMA_VERSION;

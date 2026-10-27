@@ -61,4 +61,4 @@
 |---|---|---|
 | 16 | [خطة أسبوع التسجيل](16-registration-capture.md) | أُلغي تسجيل المواد عبر رعد (ADR-020) |
 
-**الحالة:** النسخة 1.0.0 على https://taleeb-portal.pages.dev، ولم تُنشر للطلاب بعد. التفاصيل في [12-roadmap.md](12-roadmap.md)، والتغييرات في [CHANGELOG.md](../CHANGELOG.md).
+**الحالة:** النسخة 1.5.0 على https://taleeb-portal.pages.dev، ولم تُنشر للزملاء بعد. التفاصيل في [12-roadmap.md](12-roadmap.md)، والتغييرات في [CHANGELOG.md](../CHANGELOG.md).

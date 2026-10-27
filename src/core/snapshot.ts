@@ -156,10 +156,6 @@ export function mergeExtras(old: ExtraBlock[], seen: ExtraBlock[], at: string): 
   return out;
 }
 
-export function areaStatus(s: Snapshot | undefined, key: DataArea) {
-  return s?.provenance[key] ?? { status: 'missing' as const };
-}
-
 /** The newest time any area was fetched. */
 export function lastFetched(s: Snapshot | undefined): string | undefined {
   return Object.values(s?.provenance ?? {}).map(p => p?.fetchedAt).filter((x): x is string => !!x).sort().pop();

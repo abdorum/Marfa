@@ -81,7 +81,7 @@
 .job summary { list-style: none; cursor: pointer; }
 .job summary::-webkit-details-marker { display: none; }
 
-/* ---------- Now and next: a small screen with a dial, then the class ---------- */
+/* ---------- Now and next: a small screen with a timer, then the class ---------- */
 .nn { display: grid; gap: 12px; }
 .nn-main { display: grid; gap: 12px; }
 .nn-title { font-size: 20px; font-weight: 500; line-height: 1.3; }

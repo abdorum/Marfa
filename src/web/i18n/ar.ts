@@ -40,7 +40,6 @@ function unit(n: number, one: string, two: string, few: string, many: string): s
 
 export const ar = {
   appName: 'بوابة معلومات الطالب',
-  appShort: 'بوابة الطالب',
   tagline: 'ما تفرّق من شأنك الجامعي، مجموعٌ في بطاقاتٍ تُقرأ بنظرة.',
   tabs: { home: 'الرئيسية', schedule: 'الجدول', space: 'مساحتي', raad: 'رعد', courses: 'المواد', me: 'المزيد' },
 
@@ -119,10 +118,7 @@ export const ar = {
     status: { idle: 'مستعدّ', working: 'يعمل', retrying: 'يعاود', needs: 'يحتاجك', offline: 'بلا اتصال', paused: 'موقوف' },
     refresh: 'حدّث الآن',
     refreshAfter: (min: number) => `التحديث التالي بعد ${duration(min)}`,
-    lastUpdate: (ago: string) => `آخر تحديث ${ago}`,
     updatedLabel: 'آخر تحديث',
-    versionLabel: 'الإصدار',
-    never_: 'لم يُحدَّث بعد',
     log: 'سجلّ عمله',
     logEmpty: 'لا عمل بعد',
     needsYou: 'أعد إدخال كلمة المرور ليعمل رعد.',
@@ -181,7 +177,6 @@ export const ar = {
     neverUpdated: 'لم تُحدَّث بعد',
     demo: 'عرضٌ تجريبيّ ببياناتٍ وهمية',
     exitDemo: 'اخرج',
-    customize: 'تخصيص البطاقات',
   },
 
   now: {
@@ -300,7 +295,6 @@ export const ar = {
     exported: 'صُدِّر ملف التقويم، فافتحه تُضَف مواعيدك إلى تقويمك.',
     exam: 'اختبار',
     empty: 'لا محاضرات',
-    filters: { all: 'الكل', classes: 'المحاضرات', exams: 'الاختبارات' },
   },
 
   courses: {
@@ -319,7 +313,6 @@ export const ar = {
     grade: 'الدرجة',
     exam: 'الاختبار',
     barred: 'محرومٌ من الاختبار',
-    nextClass: 'المحاضرة القادمة',
     section: 'الشعبة',
     official: 'النظام الرسمي هو المرجع في كل ما سبق.',
   },

@@ -15,7 +15,6 @@ const and = (items: string[]) => (items.length < 2 ? items.join('') : `${items.s
 
 export const en: Strings = {
   appName: 'Taleeb Portal',
-  appShort: 'Taleeb',
   tagline: 'Your scattered university life, gathered into cards you read at a glance.',
   tabs: { home: 'Home', schedule: 'Schedule', space: 'My space', raad: 'Raad', courses: 'Courses', me: 'More' },
 
@@ -94,10 +93,7 @@ export const en: Strings = {
     status: { idle: 'Ready', working: 'Working', retrying: 'Retrying', needs: 'Needs you', offline: 'Offline', paused: 'Paused' },
     refresh: 'Refresh now',
     refreshAfter: (min: number) => `Next refresh in ${duration(min)}`,
-    lastUpdate: ago => `Last refresh ${ago}`,
     updatedLabel: 'Last refresh',
-    versionLabel: 'Version',
-    never_: 'Not refreshed yet',
     log: 'His log',
     logEmpty: 'Nothing yet',
     needsYou: 'Enter your password again so Raad can work.',
@@ -155,7 +151,6 @@ export const en: Strings = {
     neverUpdated: 'Not refreshed yet',
     demo: 'Demo with made-up data',
     exitDemo: 'Exit',
-    customize: 'Customize cards',
   },
 
   now: {
@@ -273,7 +268,6 @@ export const en: Strings = {
     exported: 'Calendar file exported. Open it to add your times to your calendar.',
     exam: 'Exam',
     empty: 'No classes',
-    filters: { all: 'All', classes: 'Classes', exams: 'Exams' },
   },
 
   courses: {
@@ -292,7 +286,6 @@ export const en: Strings = {
     grade: 'Grade',
     exam: 'Exam',
     barred: 'Barred from the exam',
-    nextClass: 'Next class',
     section: 'Section',
     official: 'The official system is the record for all of the above.',
   },
