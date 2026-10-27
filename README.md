@@ -65,9 +65,11 @@ npm test
 npm run deploy:raad
 ```
 
-### إيقاف رعد والإعلان
+### لوحة المشرف، وإيقاف رعد والإعلان
 
-من لوحة Cloudflare: Workers ← `ties-raad` ← Settings ← Variables. يعمل فورًا ويبقى بعد كل نشر:
+لصاحب المشروع صفحةٌ على `/admin/` ([src/admin](src/admin))، يفتحها مفتاحٌ سرّي (`ADMIN_KEY`): فيها الإيقاف والإعلان والصفحات وتحديث الأجهزة، وكم طالبًا يستعمل البوابة كل يوم وكيف تجري التحديثات. والإحصاء في قاعدة D1 باسم `taleeb-stats` داخل الاتحاد الأوروبي، تصنع جداولها بنفسها، ولا يُحفظ فيها من الطالب إلا معرّفٌ مستعار ويوما أول دخوله وآخره ([raad/server/stats.ts](raad/server/stats.ts)). وضع المفتاح في [RUNBOOK.md](RUNBOOK.md): «لوحة المشرف».
+
+والمفاتيح نفسها متغيراتٌ في لوحة Cloudflare: Workers ← `ties-raad` ← Settings ← Variables، تعمل بجانب اللوحة إن تعذّرت، وتبقى بعد كل نشر:
 
 | المتغير | الأثر |
 |---|---|
@@ -77,7 +79,9 @@ npm run deploy:raad
 | `RAAD_DISABLE_PAGES` | أجزاءٌ لا تُقرأ (`attendance`…)، إن صارت صفحةٌ تقطع الجلسات |
 | `RAAD_STALE_MINUTES` | كم تبقى البيانات قبل أن تحدّثها الأجهزة بنفسها، لأسابيع الاختبارات |
 
-وسرٌّ واحد، `ID_KEY`، **بدونه يرفض رعدٌ كل تحديث** (`npx wrangler secret put ID_KEY -c raad/wrangler.toml`). وما يُصنع ساعة الشدّة في [RUNBOOK.md](RUNBOOK.md).
+وسرّان: `ID_KEY`، **بدونه يرفض رعدٌ كل تحديث** (`npx wrangler secret put ID_KEY -c raad/wrangler.toml`)؛ و`ADMIN_KEY`، بدونه تبقى لوحة المشرف مغلقة. وما يُصنع ساعة الشدّة في [RUNBOOK.md](RUNBOOK.md).
+
+وفي التطوير المحلي (`npm run dev`) تعمل اللوحة على http://localhost:5173/admin/ بشهرٍ من إحصاءٍ مصنوع، ومفتاحها مطبوعٌ في الطرفية.
 
 ## إعدادات
 

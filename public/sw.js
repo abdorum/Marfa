@@ -25,6 +25,8 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith('/api/')) return;
+  // The owner's page is not the app: never from the cache, never cached as it.
+  if (url.pathname === '/admin' || url.pathname.startsWith('/admin/')) return;
 
   // Pages: network first, so updates arrive; the cached shell when offline or
   // when the network is too slow, so the app opens at once with what it has.

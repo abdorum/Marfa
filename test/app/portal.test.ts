@@ -41,7 +41,7 @@ function liveSource(fail?: RaadError) {
   return { source, calls };
 }
 
-function setup(o: { fail?: RaadError; server?: ServerStatus; store?: ReturnType<typeof memoryStore> } = {}) {
+function setup(o: { fail?: RaadError; server?: ServerStatus; store?: ReturnType<typeof memoryStore>; forget?: (userid: string) => void } = {}) {
   const store = o.store ?? memoryStore();
   const live = liveSource(o.fail);
   const portal = createPortal({
@@ -50,7 +50,7 @@ function setup(o: { fail?: RaadError; server?: ServerStatus; store?: ReturnType<
     institution: BMC,
     sourceFor: (m: Mode) => (m === 'demo' ? createDemoSource(() => NOW) : live.source),
     demoHistory: () => demoHistory(NOW),
-    server: o.server ? { status: async () => o.server } : undefined,
+    server: o.server || o.forget ? { status: async () => o.server, forget: o.forget } : undefined,
     engine,
     online: () => true,
   });
@@ -205,5 +205,26 @@ describe('portal', () => {
     const again = setup({ store });
     await again.portal.init();
     expect(again.portal.state.snapshot?.courses.length).toBe(6);
+  });
+
+  it('signing out lets the student’s pseudonym go from the owner’s statistics, never for the demo', async () => {
+    const gone: string[] = [];
+    const store = memoryStore();
+    const { portal } = setup({ store, forget: u => gone.push(u) });
+    await portal.init();
+    await portal.startDemo();
+    await portal.signOut();
+    expect(gone).toEqual([]);
+    await portal.signIn({ userid: '2000', pwd: 'secret' }, false);
+    await portal.signOut();
+    expect(gone).toEqual(['2000']);
+    // Not remembered, and the app opened again: the ID on the record stands in.
+    await portal.signIn({ userid: '2000', pwd: 'secret' }, false);
+    const later = setup({ store, forget: u => gone.push(u) });
+    await later.portal.init();
+    const id = later.portal.state.snapshot?.student?.id;
+    expect(id).toBeTruthy();
+    await later.portal.signOut();
+    expect(gone).toEqual(['2000', id]);
   });
 });

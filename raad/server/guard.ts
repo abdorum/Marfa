@@ -49,7 +49,8 @@ export function requestAllowed(headers: Headers): boolean {
   return !site || site === 'same-origin';
 }
 
-export const validCredentials = (userid: string, pwd: string) => USERID.test(userid) && pwd.length > 0 && pwd.length <= MAX_PWD;
+export const validUserid = (userid: string) => USERID.test(userid);
+export const validCredentials = (userid: string, pwd: string) => validUserid(userid) && pwd.length > 0 && pwd.length <= MAX_PWD;
 
 const hex = (buf: ArrayBuffer) => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
 
@@ -148,6 +149,16 @@ export async function startCooldown(store: Store | undefined, reason: Cooldown['
   const c: Cooldown = { until: new Date(now + seconds * 1000).toISOString(), reason };
   // KV keeps a key at least 60 seconds.
   await store?.put('cooldown', JSON.stringify(c), { expirationTtl: Math.max(60, seconds) }).catch(() => undefined);
+}
+
+/** The owner ends a rest early, from the owner's page: the college is back. */
+export async function endCooldown(store: Store): Promise<void> {
+  try {
+    await store.delete('cooldown');
+  } catch {
+    throw new GuardUnavailable('GUARD');
+  }
+  upstreamFailures.length = 0;
 }
 
 const upstreamFailures: number[] = [];

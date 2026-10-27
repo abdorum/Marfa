@@ -14,23 +14,50 @@ const readBody = async (req: IncomingMessage) => {
   return Buffer.concat(chunks).toString('utf8');
 };
 
+/** The owner's page's key in dev (`npm run dev`), unless ADMIN_KEY is set. */
+const DEV_ADMIN_KEY = process.env.ADMIN_KEY ?? 'dev-owner-key-0123456789-abcdefghijkl';
+
 /**
  * `npm run dev` runs Raad's server in-process (/api/v1/*, streamed like on
- * Cloudflare), and in dev only, POST /dev/capture saves anonymized pages as
- * test fixtures.
+ * Cloudflare), with a KV in memory and the statistics in an SQLite in memory,
+ * filled with a made-up month for the owner's page (/admin/). In dev only,
+ * POST /dev/capture saves anonymized pages as test fixtures.
  */
 function raadInDev(): Plugin {
   return {
     name: 'raad-in-dev',
     configureServer(server: ViteDevServer) {
+      let env: Promise<Record<string, unknown>> | undefined;
+      const devEnv = () => (env ??= (async () => {
+        const { sqliteDb } = await server.ssrLoadModule('/src/dev/sqlite-db.ts');
+        const { seedSampleStats } = await server.ssrLoadModule('/src/dev/sample-stats.ts');
+        const kv = new Map<string, string>();
+        const db = sqliteDb();
+        await seedSampleStats(db);
+        console.info(`  owner's page: /admin/ (dev key: ${DEV_ADMIN_KEY}; statistics are made up)`);
+        return {
+          RAAD_DEV: '1',
+          ADMIN_KEY: DEV_ADMIN_KEY,
+          STATS: db,
+          GUARD: { get: async (k: string) => kv.get(k) ?? null, put: async (k: string, v: string) => { kv.set(k, v); }, delete: async (k: string) => { kv.delete(k); } },
+        };
+      })());
       server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
         const url = req.url ?? '';
         try {
+          // Like Cloudflare Pages: the folder's page lives at its address with a slash.
+          if (url === '/admin' || url.startsWith('/admin?')) {
+            res.statusCode = 308;
+            res.setHeader('Location', url.replace('/admin', '/admin/'));
+            res.end();
+            return;
+          }
           if (url.startsWith('/api/')) {
             const { handleApi } = await server.ssrLoadModule('/raad/server/router.ts');
-            const body = req.method === 'POST' ? await readBody(req) : undefined;
+            const body = req.method === 'POST' || req.method === 'PUT' ? await readBody(req) : undefined;
             const headers = Object.fromEntries(Object.entries(req.headers).filter(([, v]) => typeof v === 'string')) as Record<string, string>;
-            const response: Response = await handleApi(new Request(`http://localhost${url}`, { method: req.method, body, headers }), { RAAD_DEV: "1" });
+            const ctx = { waitUntil: (p: Promise<unknown>) => void p.catch(() => {}) };
+            const response: Response = await handleApi(new Request(`http://localhost${url}`, { method: req.method, body, headers }), await devEnv(), ctx);
             res.statusCode = response.status;
             response.headers.forEach((v, k) => res.setHeader(k, v));
             if (response.body) {
@@ -94,7 +121,12 @@ function swVersion(): Plugin {
 export default defineConfig({
   plugins: [preact(), raadInDev(), swVersion()],
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
-  build: { outDir: 'dist', target: 'es2022' },
+  build: {
+    outDir: 'dist',
+    target: 'es2022',
+    // The students' app, and the owner's page beside it (/admin/), each with only its own code.
+    rolldownOptions: { input: { main: path.resolve('index.html'), admin: path.resolve('admin/index.html') } },
+  },
   test: {
     include: ['test/**/*.test.ts'],
     environment: 'node',

@@ -1,12 +1,14 @@
-// Raad's server status over HTTP (raad/server/router.ts: GET /api/v1/status).
-// It never reaches the college system, so asking is cheap.
+// Raad's server over HTTP, besides the data (raad/server/router.ts): his status
+// (GET /api/v1/status), which never reaches the college, so asking is cheap;
+// and, when the student signs out, that their pseudonym may go.
 import type { RaadServer, ServerStatus } from '../../ports/raad';
 
-export function createRaadServer(endpoint = '/api/v1/status'): RaadServer {
+export function createRaadServer(appVersion: string, base = '/api/v1'): RaadServer {
   return {
     async status() {
       try {
-        const res = await fetch(endpoint, { cache: 'no-store' });
+        // The version tells the owner how many have the latest app; nothing else goes with it.
+        const res = await fetch(`${base}/status`, { cache: 'no-store', headers: { 'X-Taleeb-App': appVersion } });
         if (!res.ok) return undefined;
         const body = (await res.json()) as Partial<ServerStatus>;
         return {
@@ -20,6 +22,9 @@ export function createRaadServer(endpoint = '/api/v1/status'): RaadServer {
       } catch {
         return undefined;
       }
+    },
+    forget(userid) {
+      void fetch(`${base}/forget`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userid }), keepalive: true }).catch(() => {});
     },
   };
 }

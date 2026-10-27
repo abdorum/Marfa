@@ -10,6 +10,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.0',
+    date: '2026-10-27',
+    items: {
+      ar: [
+        'لصاحب المشروع لوحةٌ يوقف منها رعدًا وينشر الإعلانات، ويرى كم طالبًا يستعمل البوابة كل يوم.',
+        'ولذلك يُعدّ كل طالبٍ بمعرّفٍ مستعارٍ لا يُستخرج منه رقمه، ويُحذف إذا سجّل الخروج. والتفاصيل في سياسة الخصوصية.',
+        'الإعلان يظهر بأسطره كما كُتبت.',
+      ],
+      en: [
+        'The project’s owner has a page to pause Raad, post announcements, and see how many students use the portal each day.',
+        'For that, each student is counted by a pseudonym that does not reveal the ID, deleted when they sign out. The privacy policy has the details.',
+        'Announcements keep their lines as written.',
+      ],
+    },
+  },
+  {
     version: '1.2.1',
     date: '2026-10-26',
     items: {

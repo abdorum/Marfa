@@ -46,7 +46,7 @@ export const en: Strings = {
       other: 'The college system is not responding. Try again shortly.',
     },
     consent: (institution, where, terms, privacy) => [
-      `I know this portal is a student project, not ${institution}’s; that my sign-in passes through Raad’s server${where ? ` in ${where.split(',')[0]}` : ''} and is then forgotten; and that the college may not approve of it. I agree to the `,
+      `I know this portal is a student project, not ${institution}’s; that my sign-in passes through Raad’s server${where ? ` in ${where.split(',')[0]}` : ''} and is then forgotten, but for a pseudonym that counts students; and that the college may not approve of it. I agree to the `,
       terms, ' and the ', privacy, '.',
     ],
     worried: 'If you are worried, change your password in the official system. We never ask for it in any chat.',
@@ -59,7 +59,7 @@ export const en: Strings = {
     name: 'Raad',
     card: 'Raad’s identity',
     role: 'Data-fetching server',
-    intro: 'Raad is a server that fetches your data from the college system: he signs in as you, reads what you are allowed to see, then leaves and keeps nothing. He reads, never writes; he carries, never keeps.',
+    intro: 'Raad is a server that fetches your data from the college system: he signs in as you, reads what you are allowed to see, then leaves and keeps none of your data. He reads, never writes; he carries, never keeps.',
     home: 'Lives in',
     does: 'What he does',
     doesList: [

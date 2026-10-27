@@ -247,14 +247,14 @@ describe('the owner’s switches', () => {
 
   it('status tells whether Raad is paused, the announcement and the version, without reaching the college', async () => {
     const portal = fakePortal();
-    expect(await (await get('/api/v1/status')).json()).toEqual({ paused: false, version: '1.2.1' });
+    expect(await (await get('/api/v1/status')).json()).toEqual({ paused: false, version: '1.3.0' });
     const env: Env = {
       RAAD_PAUSED: '1', RAAD_MESSAGE_AR: 'متوقف للصيانة', NOTICE_AR: 'اختبارات منتصف الفصل الأحد', NOTICE_EN: 'Midterms on Sunday',
       RAAD_STALE_MINUTES: '60', CF_VERSION_METADATA: { id: '0123456789abcdef' },
     };
     expect(await (await get('/api/v1/status', env)).json()).toEqual({
       paused: true, message: { ar: 'متوقف للصيانة' }, notice: { ar: 'اختبارات منتصف الفصل الأحد', en: 'Midterms on Sunday' },
-      staleMinutes: 60, version: '1.2.1', build: '01234567',
+      staleMinutes: 60, version: '1.3.0', build: '01234567',
     });
     expect(portal.log).toHaveLength(0);
   });
@@ -293,13 +293,4 @@ describe('metrics', () => {
     expect((await post(good, '/api/v1/metrics')).status).toBe(204); // no binding: accepted, dropped
   });
 
-  it('counts every sync on the server with codes only: no ID, no address', async () => {
-    fakePortal();
-    const points: { blobs?: string[] }[] = [];
-    const env: Env = { ...DEV, METRICS: { writeDataPoint: p => points.push(p) } };
-    await post({ userid: '2412345', pwd: 'secret' }, undefined, env, { ...SITE, 'X-Taleeb-Client-IP': '203.0.113.9' });
-    await post({ userid: '2412345', pwd: 'nope' }, undefined, env);
-    expect(points.map(p => p.blobs?.[1])).toEqual(['OK', 'BAD_CREDENTIALS']);
-    expect(JSON.stringify(points)).not.toMatch(/2412345|203\.0\.113\.9/);
-  });
 });

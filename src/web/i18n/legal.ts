@@ -3,7 +3,7 @@
 // worse than none. Update UPDATED with any change.
 import type { Lang } from './index';
 
-export const UPDATED = '2026-10-26';
+export const UPDATED = '2026-10-27';
 
 export interface LegalDoc {
   title: string;
@@ -35,9 +35,11 @@ const privacyAr: LegalDoc = {
       p: [
         'لا تُحفظ كلمة مرورك ولا بياناتك على أي خادم، ولا تُكتب في أي سجلّ.',
         'عند إدخال كلمة مرورٍ خاطئة فقط: يُحفظ عدد المحاولات تحت معرّفٍ مستعارٍ لرقمك الجامعي، يُصنع بمفتاحٍ سرّيٍّ لا يملكه إلا خادم رعد، فلا يُستخرج منه رقمك. وذلك لإيقاف التخمين وحماية حسابك من القفل، ويُحذف تلقائيًا بعد 15 دقيقة، أو عند أول دخولٍ صحيح.',
-        'ولكل تحديثٍ يُحصي الخادم نتيجته بلا هوية: رمز النتيجة، ورموز ما تعذّر من الأجزاء، ومدته مقرّبة. لا رقم جامعيًّا فيه، ولا عنوان IP، ولا معرّفًا مستعارًا؛ وغايته أن نعلم بعطل رعد قبل أن تخبرنا به. ويُحذف بعد 3 أشهر.',
+        'وإذا دخلت بنجاحٍ حُفظ معرّفٌ مستعارٌ لرقمك الجامعي، يُصنع بالمفتاح السرّي نفسه تحت اسمٍ غير اسم العدّاد، ومعه يوم أول دخولك ويوم آخره؛ لنعرف كم طالبًا يستعمل البوابة كل يوم. لا يُحفظ معه شيءٌ من بياناتك، ويُحذف إذا سجّلت الخروج، أو بعد سنةٍ لا تدخل فيها.',
+        'ولكل تحديثٍ يُحصي الخادم في يومه: نتيجته، ومدته، وساعته، وما تعذّر من الأجزاء. وعند كل فتحٍ للتطبيق: هل هو آخر إصدار. أعدادٌ لا رقم جامعيًّا فيها ولا عنوان IP ولا معرّف، غايتها أن نعلم بعطل رعد قبل أن تخبرنا به، وتُحذف بعد سنتين.',
+        'وهذه كلها في قاعدة بياناتٍ على Cloudflare داخل الاتحاد الأوروبي، لا يقرؤها إلا صاحب المشروع من لوحته.',
         'ولا يحفظ الخادم سجلًّا لما يمرّ به: لا الطلبات، ولا الردود، ولا رسائل الأخطاء.',
-        'وعند فتح التطبيق يسأل خادمَ رعد: هل هو موقوف؟ وهل من إعلان؟ ولا يحمل هذا السؤال شيئًا من بياناتك.',
+        'وعند فتح التطبيق يسأل خادمَ رعد: هل هو موقوف؟ وهل من إعلان؟ ولا يحمل هذا السؤال من بياناتك شيئًا، وإنما رقم إصدار التطبيق.',
         'وقد يعالج مزوّد الاستضافة Cloudflare عنوان IP لأغراضٍ تشغيلية وأمنية، ومنها تحديد عدد الطلبات من كل عنوان.',
       ],
     },
@@ -62,7 +64,7 @@ const privacyAr: LegalDoc = {
       h: 'إحصاءات جهازك',
       p: ['معطّلةٌ افتراضيًا. إن فعّلتها من الإعدادات أرسل جهازك عن كل تحديث: نتيجته، وعدد محاولاته، ومدته، ورقم الإصدار. بلا رقمٍ جامعيٍّ ولا عنوان IP، وتُحذف بعد 3 أشهر.'],
     },
-    { h: 'النقل خارج المملكة', p: ['المعالجة اللحظية تجري في هولندا، حيث تستضيف الكلية نظامها، تنفيذًا لطلبك بعرض بياناتك.'] },
+    { h: 'النقل خارج المملكة', p: ['المعالجة اللحظية تجري في هولندا، حيث تستضيف الكلية نظامها، تنفيذًا لطلبك بعرض بياناتك. والإحصاء المذكور أعلاه محفوظٌ داخل الاتحاد الأوروبي.'] },
     {
       h: 'الأساس والموافقة',
       p: [
@@ -73,8 +75,8 @@ const privacyAr: LegalDoc = {
     {
       h: 'حقوقك',
       p: [
-        'الاطلاع: كل ما نعالجه عنك معروضٌ لك في التطبيق.',
-        'الحذف: تسجيل الخروج يمحو كل شيءٍ من جهازك، ولا يبقى على الخادم شيءٌ يخصّك.',
+        'الاطلاع: كل ما نعالجه عنك معروضٌ لك في التطبيق، إلا المعرّف المستعار ويومَي أول دخولك وآخره، فهي على الخادم وحده.',
+        'الحذف: تسجيل الخروج يمحو كل شيءٍ من جهازك، ويحذف معرّفك المستعار من الخادم، فلا يبقى عليه إلا أعدادٌ لا تدلّ عليك. ولك أن تطلب حذفه من قناة التواصل.',
         'ولأي طلبٍ أو شكوى: قناة التواصل أعلاه، ولك أن ترفع شكواك إلى الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا).',
       ],
     },
@@ -108,9 +110,11 @@ const privacyEn: LegalDoc = {
       p: [
         'Your password and your data are never stored on any server or written to any log.',
         'Only after a wrong password: the number of attempts, under a pseudonym of your student ID made with a secret key only Raad\'s server holds, so your ID cannot be recovered from it. It stops guessing and protects your account from lockout, and is deleted automatically after 15 minutes, or at the first correct sign-in.',
-        'For each refresh, the server counts its outcome with no identity: a result code, the codes of the parts that failed, and a rounded duration. No student ID, no IP address, no pseudonym; it is how we learn Raad is broken before you tell us. Deleted after 3 months.',
+        'When you sign in successfully, a pseudonym of your student ID is kept, made with the same secret key under a different name from the counter\'s, with the day of your first sign-in and of your latest; it is how we know how many students use the portal each day. None of your data is kept with it, and it is deleted when you sign out, or after a year in which you never sign in.',
+        'For each refresh, the server counts, per day: its outcome, its duration, its hour, and the parts that failed. And for each time the app opens: whether it is the latest version. Counts with no student ID, no IP address and no pseudonym, so we learn Raad is broken before you tell us; deleted after two years.',
+        'All of this is in a database on Cloudflare inside the European Union, read only by the project\'s owner, from the owner\'s page.',
         'The server keeps no log of what passes through it: no requests, no replies, no error messages.',
-        'When the app opens, it asks Raad\'s server whether it is paused and whether there is an announcement. That question carries none of your data.',
+        'When the app opens, it asks Raad\'s server whether it is paused and whether there is an announcement. That question carries none of your data, only the app\'s version.',
         'Our host, Cloudflare, may process IP addresses for operations and security, including limiting requests per address.',
       ],
     },
@@ -135,7 +139,7 @@ const privacyEn: LegalDoc = {
       h: 'Your device\'s statistics',
       p: ['Off by default. If you turn them on in Settings, your device sends for each refresh: its outcome, attempts, duration and the app version. No student ID and no IP address. Deleted after 3 months.'],
     },
-    { h: 'Transfer outside the Kingdom', p: ['The momentary processing happens in the Netherlands, where the college hosts its system, to carry out your request to see your data.'] },
+    { h: 'Transfer outside the Kingdom', p: ['The momentary processing happens in the Netherlands, where the college hosts its system, to carry out your request to see your data. The statistics above are kept inside the European Union.'] },
     {
       h: 'Basis and consent',
       p: [
@@ -146,8 +150,8 @@ const privacyEn: LegalDoc = {
     {
       h: 'Your rights',
       p: [
-        'Access: everything we process about you is shown to you in the app.',
-        'Deletion: signing out deletes everything from your device, and nothing about you remains on the server.',
+        'Access: everything we process about you is shown to you in the app, except the pseudonym and the days of your first and latest sign-in, which are on the server only.',
+        'Deletion: signing out deletes everything from your device and your pseudonym from the server, leaving only counts that do not point to you. You may also ask for it to be deleted through the contact channel.',
         'For any request or complaint: the contact channel above. You may also complain to the Saudi Data and AI Authority (SDAIA).',
       ],
     },

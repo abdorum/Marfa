@@ -18,4 +18,6 @@ export interface ServerStatus {
 
 export interface RaadServer {
   status(): Promise<ServerStatus | undefined>;
+  /** The student signed out: their pseudonym leaves the owner's statistics. Never fails, never waits. */
+  forget?(userid: string): void;
 }

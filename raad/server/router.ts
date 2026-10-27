@@ -1,28 +1,29 @@
-// Raad's server: the whole API (/api/v1/*). Stateless: no request or reply is
-// stored or logged. Shared by the Worker, the Pages Function and `npm run dev`.
+// Raad's server: the whole API (/api/v1/*). No request or reply is stored or
+// logged. The owner's statistics keep counts per day and, for each student who
+// signed in, a pseudonym with the first and last day of use (stats.ts).
+// Shared by the Worker, the Pages Function and `npm run dev`.
 //
 //   GET  /api/v1/status   paused or resting? the owner's announcement. Never reaches the college.
 //   GET  /api/v1/health   can Raad reach the college system? Never signs in; answered once a minute at most.
 //   POST /api/v1/sync     sign in, read the allowed parts, sign out. Streams its steps
 //                         as NDJSON when asked (Accept: application/x-ndjson).
+//   POST /api/v1/forget   the student signed out: their pseudonym leaves the statistics.
 //   POST /api/v1/metrics  anonymous statistics, when the student opted in.
+//   *    /api/v1/admin/*  the owner's page, with the owner's key (admin.ts).
+import { handleAdmin } from './admin';
 import type { EdgeConnector, ServerEvent } from './connector';
 import { EdgeError } from './connector';
 import { CONNECTORS } from './connectors';
 import { RAAD_VERSION } from './config';
 import {
   BLOCKED_REST_S, claim, clearFailures, cooldown, failures, GuardUnavailable, idKey, limited, MAX_FAILURES, recordFailure,
-  release, requestAllowed, startCooldown, upstreamFailed, UPSTREAM_REST_S, validCredentials, type RateLimit, type Store,
+  release, requestAllowed, startCooldown, upstreamFailed, UPSTREAM_REST_S, validCredentials, validUserid, type RateLimit, type Store,
 } from './guard';
+import { clientIp, HEADERS, json, MAX_BODY, readJson } from './http';
+import { count, countSync, forget, pseudonym, seen, type Db, type Wait } from './stats';
+import { combine, dashboardSwitches, readSwitches, type SwitchVars } from './switches';
 
-const MAX_BODY = 4096;
-const HEADERS = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
 const HEALTH_CACHE_MS = 60_000;
-
-const json = (status: number, body: unknown, extra: Record<string, string> = {}) => new Response(JSON.stringify(body), {
-  status,
-  headers: { 'Content-Type': 'application/json; charset=utf-8', ...HEADERS, ...extra },
-});
 
 /** Workers Analytics Engine: rows of codes and counts, never an ID or an address. */
 interface Metrics {
@@ -31,28 +32,27 @@ interface Metrics {
 
 /**
  * Cloudflare bindings and variables.
- * - METRICS: Workers Analytics Engine. IP_LIMIT, ID_LIMIT, GLOBAL_LIMIT: rate limiting.
- * - GUARD: KV holding wrong-password counters and the rest (guard.ts). ID_KEY: the secret behind their keys.
+ * - METRICS: Workers Analytics Engine, for the statistics devices send when their student opted in.
+ * - IP_LIMIT, ID_LIMIT, GLOBAL_LIMIT: rate limiting.
+ * - GUARD: KV holding wrong-password counters, Raad's rest and the owner's switches (guard.ts, switches.ts).
+ *   ID_KEY: the secret behind every pseudonym.
+ * - STATS: D1, the owner's statistics (stats.ts). ADMIN_KEY: the owner's key to the owner's page (admin.ts).
  * - RAAD_PAUSED = "1" stops every sync, with RAAD_MESSAGE_AR/EN as the reason.
  * - NOTICE_AR/EN: an announcement every student sees.
  * - RAAD_DISABLE_PAGES: parts never to read, comma-separated ("attendance"), e.g. a page that began to end sessions.
  * - RAAD_STALE_MINUTES: how old data may get before devices refresh it on their own (exam weeks: raise it).
+ *   These four are the dashboard's way to the switches the owner's page sets (switches.ts).
  * - RAAD_DEV = "1": dev and tests, where the protections may be missing. Anywhere else a missing one refuses every sync.
  */
-export interface Env {
+export interface Env extends SwitchVars {
   METRICS?: Metrics;
   IP_LIMIT?: RateLimit;
   ID_LIMIT?: RateLimit;
   GLOBAL_LIMIT?: RateLimit;
   GUARD?: Store;
   ID_KEY?: string;
-  RAAD_PAUSED?: string;
-  RAAD_MESSAGE_AR?: string;
-  RAAD_MESSAGE_EN?: string;
-  NOTICE_AR?: string;
-  NOTICE_EN?: string;
-  RAAD_DISABLE_PAGES?: string;
-  RAAD_STALE_MINUTES?: string;
+  STATS?: Db;
+  ADMIN_KEY?: string;
   RAAD_DEV?: string;
   CF_VERSION_METADATA?: { id?: string; tag?: string };
 }
@@ -66,21 +66,21 @@ const OUTCOMES = ['succeeded', 'failed', 'needs_input', 'cancelled'];
 const ERROR_CODES = ['BAD_CREDENTIALS', 'ACCOUNT', 'SESSION_EXPIRED', 'NOT_AUTHORIZED', 'TIMEOUT', 'UPSTREAM', 'BLOCKED'];
 const COLLEGE_TROUBLE = ['UPSTREAM', 'TIMEOUT'];
 
-const paused = (env: Env) => /^(1|true|yes)$/i.test(env.RAAD_PAUSED ?? '');
 const dev = (env: Env) => env.RAAD_DEV === '1';
-const localized = (ar?: string, en?: string) => (ar || en ? { ar: ar || undefined, en: en || undefined } : undefined);
-const staleMinutes = (env: Env) => {
-  const n = Number(env.RAAD_STALE_MINUTES);
-  return Number.isInteger(n) && n >= 5 && n <= 24 * 60 ? n : undefined;
-};
-const disabled = (env: Env) => new Set((env.RAAD_DISABLE_PAGES ?? '').split(',').map(s => s.trim()).filter(Boolean));
 
 /**
- * The address the student's request came from. The site's Pages Function
- * forwards it in X-Taleeb-Client-IP, since Raad can only be reached through it
- * (no public address); a direct call (dev) has CF-Connecting-IP.
+ * Which app opened, from the header it sends with its status check: this
+ * version, an older one, or unknown (apps before 1.3 send none). Never more,
+ * so the counts cannot be flooded with made-up versions.
  */
-const clientIp = (request: Request) => request.headers.get('X-Taleeb-Client-IP') ?? request.headers.get('CF-Connecting-IP') ?? 'unknown';
+function appVersion(request: Request): string {
+  const v = request.headers.get('X-Taleeb-App') ?? '';
+  if (v === RAAD_VERSION) return v;
+  const parts = (s: string) => s.split('.').map(Number);
+  const [a, b] = [parts(v), parts(RAAD_VERSION)];
+  const older = /^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(v) && (a[0]! - b[0]! || a[1]! - b[1]! || a[2]! - b[2]!) < 0;
+  return older ? 'older' : 'unknown';
+}
 
 /**
  * Anonymous Raad statistics a device sends (ADR-014). Only whitelisted, bounded
@@ -102,16 +102,15 @@ function metrics(body: Record<string, unknown>, env: Env): Response {
   return new Response(null, { status: 204 });
 }
 
-/**
- * What the owner learns from every sync, with no consent needed because it
- * says nothing about anyone: a result code from a closed list, the codes of
- * the parts that failed, and a rounded duration. No ID, no address, no hash.
- */
-function serverMetric(env: Env, code: string, errors: Record<string, string>, ms: number) {
-  try {
-    const parts = [...new Set(Object.values(errors).filter(e => ERROR_CODES.includes(e)))].sort().join(',');
-    env.METRICS?.writeDataPoint({ indexes: ['server'], blobs: ['server', code, parts, RAAD_VERSION], doubles: [Math.round(ms / 100) * 100] });
-  } catch { /* statistics never break a sync */ }
+/** The student signed out: their pseudonym leaves the statistics. The same answer whether there was one or not. */
+async function forgetStudent(request: Request, env: Env): Promise<Response> {
+  const read = await readJson(request);
+  if ('refused' in read) return read.refused;
+  const userid = String(read.body.userid ?? '').trim();
+  if (!validUserid(userid)) return json(400, { code: 'BAD_REQUEST' });
+  if (await limited(env.IP_LIMIT, `forget:${clientIp(request)}`)) return json(429, { code: 'RATE_LIMITED' }, { 'Retry-After': '60' });
+  if (env.STATS) await forget(env.STATS, await pseudonym(userid, env.ID_KEY)).catch(() => undefined);
+  return new Response(null, { status: 204, headers: HEADERS });
 }
 
 let health: { at: number; body: Record<string, unknown> } | undefined;
@@ -129,15 +128,18 @@ export async function handleApi(request: Request, env: Env = {}, ctx?: Execution
 }
 
 async function route(path: string, request: Request, env: Env, ctx: ExecutionContext | undefined, connector: EdgeConnector): Promise<Response> {
+  const wait: Wait | undefined = ctx ? p => ctx.waitUntil(p) : undefined;
   if (path === '/api/v1/status' && request.method === 'GET') {
-    const rest = paused(env) ? undefined : await cooldown(env.GUARD).catch(() => undefined);
+    count(env.STATS, wait, 'open', appVersion(request));
+    const s = combine(await readSwitches(env.GUARD).catch(() => ({})), dashboardSwitches(env));
+    const rest = s.paused ? undefined : await cooldown(env.GUARD).catch(() => undefined);
     return json(200, {
-      paused: paused(env) || !!rest,
+      paused: s.paused || !!rest,
       auto: rest ? true : undefined,
       until: rest?.until,
-      message: paused(env) ? localized(env.RAAD_MESSAGE_AR, env.RAAD_MESSAGE_EN) : undefined,
-      notice: localized(env.NOTICE_AR, env.NOTICE_EN),
-      staleMinutes: staleMinutes(env),
+      message: s.message,
+      notice: s.notice,
+      staleMinutes: s.staleMinutes,
       version: RAAD_VERSION,
       build: env.CF_VERSION_METADATA?.id?.slice(0, 8),
     });
@@ -147,7 +149,8 @@ async function route(path: string, request: Request, env: Env, ctx: ExecutionCon
     if (!health || Date.now() - health.at > HEALTH_CACHE_MS) health = { at: Date.now(), body: await connector.health() };
     return json(200, health.body);
   }
-  if (path !== '/api/v1/sync' && path !== '/api/v1/metrics') return json(404, { code: 'NOT_FOUND' });
+  if (path.startsWith('/api/v1/admin/')) return handleAdmin(path, request, env, connector);
+  if (path !== '/api/v1/sync' && path !== '/api/v1/metrics' && path !== '/api/v1/forget') return json(404, { code: 'NOT_FOUND' });
   if (request.method !== 'POST') return json(405, { code: 'METHOD' });
   if (!requestAllowed(request.headers)) return json(403, { code: 'FORBIDDEN' });
   if (!/^application\/json\b/i.test(request.headers.get('Content-Type') ?? '')) return json(415, { code: 'BAD_REQUEST' });
@@ -161,16 +164,24 @@ async function route(path: string, request: Request, env: Env, ctx: ExecutionCon
       return json(400, { code: 'BAD_REQUEST' });
     }
   }
+  if (path === '/api/v1/forget') return forgetStudent(request, env);
 
-  // The owner's switch: nothing reaches the college while Raad is paused.
-  if (paused(env)) return json(503, { code: 'PAUSED', message: localized(env.RAAD_MESSAGE_AR, env.RAAD_MESSAGE_EN) });
+  /** A sync refused before it reached the college, counted by its code. */
+  const refuse = (status: number, body: { code: string } & Record<string, unknown>, extra?: Record<string, string>) => {
+    count(env.STATS, wait, 'outcome', body.code);
+    return json(status, body, extra);
+  };
+
+  // The owner's switches: nothing reaches the college while Raad is paused.
+  const s = combine(await readSwitches(env.GUARD), dashboardSwitches(env));
+  if (s.paused) return refuse(503, { code: 'PAUSED', message: s.message });
   // A protection that is not there refuses, rather than letting the sync through unguarded.
-  if (!dev(env) && (!env.GUARD || !env.IP_LIMIT || !env.ID_LIMIT || !env.GLOBAL_LIMIT || !env.ID_KEY)) return json(503, { code: 'UNAVAILABLE' });
+  if (!dev(env) && (!env.GUARD || !env.IP_LIMIT || !env.ID_LIMIT || !env.GLOBAL_LIMIT || !env.ID_KEY)) return refuse(503, { code: 'UNAVAILABLE' });
   // The college is struggling or refused Raad: rest, for everyone.
   const rest = await cooldown(env.GUARD);
   if (rest) {
     const seconds = Math.max(1, Math.ceil((Date.parse(rest.until) - Date.now()) / 1000));
-    return json(503, { code: 'COOLDOWN', until: rest.until }, { 'Retry-After': String(seconds) });
+    return refuse(503, { code: 'COOLDOWN', until: rest.until }, { 'Retry-After': String(seconds) });
   }
 
   let body: { userid?: unknown; pwd?: unknown; pages?: unknown };
@@ -184,21 +195,20 @@ async function route(path: string, request: Request, env: Env, ctx: ExecutionCon
   const userid = String(body.userid ?? '').trim();
   const pwd = String(body.pwd ?? '');
   if (!validCredentials(userid, pwd)) return json(400, { code: 'BAD_REQUEST' });
-  const off = disabled(env);
   const parts = (Array.isArray(body.pages)
     ? body.pages.filter((p): p is string => typeof p === 'string' && connector.parts.includes(p))
-    : [...connector.parts]).filter(p => !off.has(p));
+    : [...connector.parts]).filter(p => !s.skip.has(p));
 
   // Before anything reaches the college: one device, one ID and Raad as a whole
   // can only ask so often, and an ID with too many wrong passwords rests (so a
   // wrong saved password cannot lock the student's real account).
   const id = await idKey(userid, env.ID_KEY);
   if (await limited(env.GLOBAL_LIMIT, 'all') || await limited(env.IP_LIMIT, clientIp(request)) || await limited(env.ID_LIMIT, id)) {
-    return json(429, { code: 'RATE_LIMITED' }, { 'Retry-After': '60' });
+    return refuse(429, { code: 'RATE_LIMITED' }, { 'Retry-After': '60' });
   }
   const failed = await failures(env.GUARD, id);
-  if (failed >= MAX_FAILURES) return json(429, { code: 'LOCKED' });
-  if (!claim(id)) return json(429, { code: 'BUSY' }, { 'Retry-After': '10' });
+  if (failed >= MAX_FAILURES) return refuse(429, { code: 'LOCKED' });
+  if (!claim(id)) return refuse(429, { code: 'BUSY' }, { 'Retry-After': '10' });
 
   /** The whole sync, ending in an HTTP status and body; `emit` sees each step. */
   const run = async (emit: (e: ServerEvent) => void): Promise<[number, unknown]> => {
@@ -210,14 +220,17 @@ async function route(path: string, request: Request, env: Env, ctx: ExecutionCon
       if (parts.length && errs.length === parts.length && errs.every(e => COLLEGE_TROUBLE.includes(e)) && upstreamFailed()) {
         await startCooldown(env.GUARD, 'UPSTREAM', UPSTREAM_REST_S);
       }
-      serverMetric(env, 'OK', out.errors, Date.now() - t0);
+      // What the owner learns: the outcome, the parts that failed and why, and that this student came today.
+      const why = Object.fromEntries(Object.entries(out.errors).map(([part, e]) => [part, ERROR_CODES.includes(e) ? e : 'OTHER']));
+      countSync(env.STATS, wait, errs.length ? 'PARTIAL' : 'OK', Date.now() - t0, why);
+      if (env.STATS) wait?.(pseudonym(userid, env.ID_KEY).then(who => seen(env.STATS, who)));
       return [200, out];
     } catch (e) {
       const code = e instanceof EdgeError ? e.code : 'SERVER_ERROR';
       if (code === 'BAD_CREDENTIALS') await recordFailure(env.GUARD, id);
       if (code === 'BLOCKED') await startCooldown(env.GUARD, 'BLOCKED', BLOCKED_REST_S);
       if (COLLEGE_TROUBLE.includes(code) && upstreamFailed()) await startCooldown(env.GUARD, 'UPSTREAM', UPSTREAM_REST_S);
-      serverMetric(env, code, {}, Date.now() - t0);
+      countSync(env.STATS, wait, code, Date.now() - t0);
       // `detail` is a safe trace (statuses, paths, cookie names), never credentials or values.
       if (e instanceof EdgeError) {
         const status = code === 'BAD_CREDENTIALS' ? 401 : code === 'ACCOUNT' ? 403 : 502;

@@ -432,7 +432,7 @@ export const NoticeCard: CardFn = ({ index }) => {
   if (!text) return null;
   return (
     <Card id="notice" title={strings.value.notice.title} index={index} tone="lime" share={false} actions={<Megaphone size={20} aria-hidden="true" />}>
-      <p style={{ lineHeight: 1.8 }}><bdi>{text}</bdi></p>
+      <p style={{ lineHeight: 1.8, whiteSpace: 'pre-line' }}><bdi>{text}</bdi></p>
     </Card>
   );
 };

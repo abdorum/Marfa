@@ -40,7 +40,7 @@ export const portal = createPortal({
   institution: INSTITUTION,
   sourceFor: (m: Mode) => createSource(m === 'demo' ? 'demo' : INSTITUTION.source, { institution: INSTITUTION, onRaw: capture ? devCapture : undefined }),
   demoHistory: () => demoHistory(new Date()),
-  server: createRaadServer(),
+  server: createRaadServer(PRODUCT.version),
   engine: realDeps,
   metrics: (job, ms) => sendMetrics(job, ms, PRODUCT.version),
   online: () => navigator.onLine,

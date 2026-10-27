@@ -270,6 +270,11 @@ export function createPortal(d: PortalDeps): Portal {
 
     async signOut() {
       const prefs = state.prefs;
+      // The owner's statistics know a student who signed in only by a pseudonym; it goes too.
+      if (storedMode === 'live' || state.mode === 'live') {
+        const userid = (credentials ?? await openCredentials())?.userid ?? (state.mode === 'live' ? state.snapshot?.student?.id : undefined);
+        if (userid) d.server?.forget?.(userid);
+      }
       clearTimeout(persistTimer);
       await d.store.clear();
       d.sealer.reset();

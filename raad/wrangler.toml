@@ -7,7 +7,8 @@ main = "worker.ts"
 compatibility_date = "2026-09-01"
 # Variables set in the dashboard survive deploys: the owner pauses Raad
 # (RAAD_PAUSED = 1, RAAD_MESSAGE_AR/EN) or posts an announcement (NOTICE_AR/EN)
-# there, without touching code (README: «إيقاف رعد والإعلان»).
+# there, without touching code, beside the owner's page (/admin/), which sets
+# the same switches (README: «لوحة المشرف، وإيقاف رعد والإعلان»).
 keep_vars = true
 # Only the site may call it, through the service binding.
 workers_dev = false
@@ -29,9 +30,10 @@ enabled = false
 [version_metadata]
 binding = "CF_VERSION_METADATA"
 
-# Anonymous counters: result codes and durations, never an ID or an address.
-# Waits for Analytics Engine to be enabled on the account (Dashboard → Workers
-# → Analytics Engine); until then the counters are simply not written.
+# The statistics devices send when their student opted in (ADR-014): codes and
+# counts, never an ID or an address. Waits for Analytics Engine to be enabled on
+# the account (Dashboard → Workers → Analytics Engine); until then they are
+# simply not written. The server's own statistics are in STATS below.
 # [[analytics_engine_datasets]]
 # binding = "METRICS"
 # dataset = "raad"
@@ -61,3 +63,16 @@ simple = { limit = 4, period = 60 }
 name = "GLOBAL_LIMIT"
 namespace_id = "1003"
 simple = { limit = 300, period = 60 }
+
+# The owner's statistics (server/stats.ts, ADR-040): a pseudonym per student
+# who signed in with the first and last day, and counts per day that point to
+# no one. Kept inside the European Union; the Worker makes its own tables.
+[[d1_databases]]
+binding = "STATS"
+database_name = "taleeb-stats"
+database_id = "46000ef0-635c-4d21-a988-81f85c3bd4e1"
+
+# Every night at 03:00 in Jeddah: pseudonyms unused for a year, and counts two
+# years old, are deleted (worker.ts: scheduled).
+[triggers]
+crons = ["0 0 * * *"]
