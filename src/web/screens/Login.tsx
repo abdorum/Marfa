@@ -3,13 +3,13 @@
 // from a list; a student whose college is not there asks for it, and the
 // owner's page counts the requests (raad/server/wishes.ts).
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { Building2, Check, ChevronDown, Languages, Lock, Plus, Share2 } from 'lucide-preact';
+import { Building2, Check, ChevronDown, FileText, Languages, Link as LinkIcon, Lock, Plus, Share2, Star } from 'lucide-preact';
 import type { SignInFailure } from '../../app/portal';
 import { INSTITUTION } from '../../institutions';
 import { lang, strings } from '../i18n';
 import { RaadLine } from '../raad/RaadLine';
 import { navigate } from '../router';
-import { lastJob, portal, server, setPrefs } from '../state';
+import { DEFAULT_PHOTO, lastJob, portal, server, setPrefs } from '../state';
 import { COURSE_COLORS } from '../colors';
 import { Link, RaadAvatar, Sheet, Spinner } from '../ui';
 
@@ -168,6 +168,21 @@ const ArtRaad = () => (
   </div>
 );
 
+/** «مساحتي» in small: the picture, a few kit slots, a badge. */
+const ArtSpace = () => (
+  <div class="art-space" aria-hidden="true">
+    <div class="card art s1">
+      <span class="avatar round lg"><img src={DEFAULT_PHOTO} alt="" /></span>
+      <i class="sp-rule" />
+      <span class="bars"><i style={{ inlineSize: '86%' }} /><i style={{ inlineSize: '64%' }} /></span>
+    </div>
+    <div class="card art s2">
+      <span class="slots"><i><LinkIcon /></i><i><b>6</b></i><i><FileText /></i><i class="empty"><Plus /></i></span>
+    </div>
+    <span class="hex"><Star /></span>
+  </div>
+);
+
 const ArtPrivacy = () => (
   <div class="art-lock" aria-hidden="true">
     <div class="card"><Lock size={72} strokeWidth={1.25} /></div>
@@ -187,7 +202,7 @@ export function Welcome() {
         <LangSwitch />
         {!last && <button class="chip glass" onClick={done}>{t.skip}</button>}
       </div>
-      <div class="welcome-art">{i === 0 ? <ArtCards /> : i === 1 ? <ArtRaad /> : <ArtPrivacy />}</div>
+      <div class="welcome-art">{[<ArtCards />, <ArtRaad />, <ArtSpace />, <ArtPrivacy />][i]}</div>
       <div class="welcome-text" key={i}>
         <h1>{slide.title}</h1>
         <p>{slide.body}</p>

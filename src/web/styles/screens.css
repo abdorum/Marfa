@@ -414,3 +414,18 @@ a.ring-tile:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); 
 
 /* Raad in «المزيد»: his picture and state, a row that opens his page. */
 .raad-row .raad-av { grid-row: span 2; }
+/* The tour's «مساحتي»: a small dossier, a row of kit slots, a badge. */
+.art-space { position: relative; inline-size: 250px; block-size: 260px; }
+.art-space .art { position: absolute; }
+.art-space .s1 { inset-block-start: 0; inset-inline-end: 0; inline-size: 190px; rotate: 3deg; display: grid; justify-items: center; gap: 12px; padding: 16px; }
+.art-space .bars { display: grid; gap: 7px; inline-size: 100%; }
+.art-space .bars i { display: block; block-size: 8px; background: var(--ink-2); }
+.art-space .bars i:first-child { background: var(--ok); }
+.art-space .s2 { inset-block-end: 14px; inset-inline-start: 0; inline-size: 200px; rotate: -4deg; padding: 12px; }
+.art-space .slots { display: grid; grid-template-columns: repeat(4, 40px); gap: 6px; justify-content: center; }
+.art-space .slots i { aspect-ratio: 1; display: grid; place-items: center; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); }
+.art-space .slots i svg { inline-size: 18px; block-size: 18px; }
+.art-space .slots b { font: 300 20px var(--font-figure); }
+.art-space .slots i.empty { background: none; box-shadow: none; outline: 1.5px dashed var(--line); outline-offset: -1.5px; color: var(--ink-3); }
+.art-space .hex { position: absolute; inset-block-start: 26px; inset-inline-start: 0; z-index: 1; inline-size: 58px; block-size: 58px; display: grid; place-items: center; background: var(--bar); color: var(--on-bar); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.art-space .hex svg { inline-size: 22px; block-size: 22px; }

@@ -23,7 +23,8 @@ export const en: Strings = {
     slides: [
       { title: 'Your door to your university data', body: 'Your schedule, absences, grades and exams, in clear cards. No more hunting through pages or asking about times.' },
       { title: 'Raad brings it to you', body: 'Raad is a server that signs in to your college system as you, reads your data, then leaves. He keeps none of it, and never writes a thing to the system.' },
-      { title: 'And your data stays with you', body: 'It is kept on your device, encrypted. Share any card as a picture if you like, with your personal details hidden.' },
+      { title: 'And a space of your own', body: 'Your picture in the middle of the bar opens My space: your identity and standing, a kit for the links, notes, pictures and dates you reach for often, and your badges.' },
+      { title: 'And your data stays with you', body: 'It is kept on your device, encrypted, with your kit and picture. Share any card as a picture if you like, with your personal details hidden.' },
     ],
     next: 'Next',
     skip: 'Skip',
