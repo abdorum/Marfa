@@ -1,22 +1,19 @@
-// "Me": the student card, holds and to-dos, everything else, settings, about.
+// «المزيد»: Raad, holds and to-dos, everything else, settings, about. The
+// student's own corner is «مساحتي» (Space.tsx).
 import type { ComponentChildren } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
-import { ChevronLeft, ExternalLink, Info, ListTodo, LogOut, MessageCircle, Settings as Gear, Shuffle, Table2 } from 'lucide-preact';
+import { ChevronLeft, ExternalLink, Info, ListTodo, LogOut, MessageCircle, Settings as Gear, Table2 } from 'lucide-preact';
 import { PRODUCT } from '../../app/product';
-import { avatarFor } from '../../core/derive';
 import type { ExtraBlock } from '../../core/model';
 import { INSTITUTION } from '../../institutions';
 import { Card } from '../cards/Card';
 import { HOME_CARDS } from '../cards/home';
 import { CHANGELOG } from '../changelog';
-import { lang, strings, type Lang } from '../i18n';
+import { ago, lang, strings, type Lang } from '../i18n';
 import { LEGAL, UPDATED } from '../i18n/legal';
 import { navigate } from '../router';
-import { portal, prefs, setPrefs, signedIn, snapshot } from '../state';
-import { Avatar, Empty, Link, toast, TopBar } from '../ui';
+import { lastUpdated, prefs, raadStatus, setPrefs, signedIn, signOut, snapshot } from '../state';
+import { Empty, Link, RaadAvatar, toast, TopBar } from '../ui';
 import { RaadAbout } from './Raad';
-
-const AVATARS_URL = '/avatars.json';
 
 /** Links come from the institution's pages: only real web links, never javascript: or data:. */
 const safeHref = (href?: string) => {
@@ -28,12 +25,6 @@ const safeHref = (href?: string) => {
   }
 };
 
-function useAvatars() {
-  const [list, setList] = useState<string[]>([]);
-  useEffect(() => { fetch(AVATARS_URL).then(r => r.json()).then(setList).catch(() => {}); }, []);
-  return list;
-}
-
 /** A row in a menu card. */
 function MenuRow({ href, onClick, icon, title, danger }: { href?: string; onClick?: () => void; icon: ComponentChildren; title: string; danger?: boolean }) {
   const inner = <><span class="change-ico">{icon}</span><span class={`t${danger ? ' risk' : ''}`}>{title}</span><span class="e"><ChevronLeft class="flip-ltr" size={18} /></span></>;
@@ -43,15 +34,7 @@ function MenuRow({ href, onClick, icon, title, danger }: { href?: string; onClic
 export function Me() {
   const s = snapshot.value!;
   const t = strings.value;
-  const st = s.student;
-  const avatars = useAvatars();
-  const name = (lang.value === 'ar' ? st?.name.ar ?? st?.name.en : st?.name.en ?? st?.name.ar) ?? '—';
-  const other = lang.value === 'ar' ? st?.name.en : st?.name.ar;
-  const nextAvatar = () => {
-    if (!avatars.length) return;
-    const current = prefs.value.avatar ?? avatarFor(st?.id ?? '', avatars);
-    void setPrefs({ avatar: avatars[(avatars.indexOf(current ?? '') + 1) % avatars.length] });
-  };
+  const status = raadStatus.value;
   const feedback = async () => {
     const standalone = matchMedia('(display-mode: standalone)').matches;
     const note = `${PRODUCT.name.en} ${PRODUCT.version} · ${navigator.userAgent.match(/iPhone|iPad|Android|Windows|Mac OS X|Linux/)?.[0] ?? 'device'}${standalone ? ' · installed' : ''}`;
@@ -63,27 +46,13 @@ export function Me() {
     <>
       <TopBar title={t.me.title} />
       <main class="page">
-        <Card id="student-card" title={t.me.card} index={1} tone="night" hud>
-          <div class="idcard">
-            <div class="idcard-top">
-              <button onClick={nextAvatar} aria-label={t.me.avatar} style={{ border: 0, background: 'none', padding: 0, position: 'relative' }}>
-                <Avatar large />
-                {avatars.length > 1 && <span class="chip lime" style={{ position: 'absolute', insetInlineEnd: '-8px', insetBlockEnd: '-6px', padding: '3px' }} data-noshare><Shuffle size={12} /></span>}
-              </button>
-              <div class="who">
-                <h2>{name}</h2>
-                {other && <p><bdi>{other}</bdi></p>}
-                <p>{[st?.program, INSTITUTION.name[lang.value]].filter(Boolean).join(' · ')}</p>
-              </div>
-            </div>
-            <dl class="kv">
-              <dt>{t.me.id}</dt><dd><bdi data-private>{st?.id ?? '—'}</bdi></dd>
-              {st?.email && <><dt>{t.me.email}</dt><dd><bdi data-private>{st.email}</bdi></dd></>}
-              {st?.phone && <><dt>{t.me.phone}</dt><dd><bdi data-private>{st.phone}</bdi></dd></>}
-              <dt>{t.me.advisor}</dt><dd class="text"><bdi data-private>{st?.advisor ?? '—'}</bdi></dd>
-            </dl>
-            <div class="strip" aria-hidden="true">{Array.from({ length: 16 }, () => <i />)}</div>
-          </div>
+        <Card id="me-raad" title={t.raad.name} index={1} share={false}>
+          <Link href="/raad" class="lrow raad-row">
+            <RaadAvatar size={44} />
+            <span class="t">{t.raad.name} · {t.raad.status[status]}</span>
+            <span class="m">{t.raad.updatedLabel}: {lastUpdated.value ? ago(lastUpdated.value) : '—'}</span>
+            <span class="e"><ChevronLeft class="flip-ltr" size={18} /></span>
+          </Link>
         </Card>
 
         <Card id="me-menu" title={t.tabs.me} index={2} share={false}>
@@ -93,7 +62,7 @@ export function Me() {
             <MenuRow href="/me/settings" icon={<Gear />} title={t.me.settings} />
             <MenuRow href="/me/about" icon={<Info />} title={t.me.about} />
             <MenuRow onClick={() => void feedback()} icon={<MessageCircle />} title={t.me.feedback} />
-            <MenuRow danger onClick={async () => { if (confirm(t.me.signOutConfirm)) { await portal.signOut(); navigate('/', { replace: true }); } }} icon={<LogOut />} title={t.me.signOut} />
+            <MenuRow danger onClick={async () => { if (confirm(t.me.signOutConfirm)) { await signOut(); navigate('/', { replace: true }); } }} icon={<LogOut />} title={t.me.signOut} />
           </div>
         </Card>
       </main>

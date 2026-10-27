@@ -10,6 +10,7 @@ import { Login, Welcome } from './screens/Login';
 import { About, Legal, Me, More, MoreBlock, Notices, Settings } from './screens/Me';
 import { Raad } from './screens/Raad';
 import { Schedule } from './screens/Schedule';
+import { Space } from './screens/Space';
 import { ShareSheet } from './share/ShareSheet';
 import { prefs, ready, setPrefs, signedIn, start } from './state';
 import { Dock, Spinner, Toast } from './ui';
@@ -26,6 +27,7 @@ function Screen() {
   let m: Record<string, string> | undefined;
   if (p === '/schedule' || p === '/calendar') return <Schedule />;
   if (p === '/raad' || p.startsWith('/raad/')) return <Raad />;
+  if (p === '/space') return <Space />;
   if (p === '/courses') return <Courses />;
   if ((m = match('/courses/:slug'))) return <Course slug={m.slug!} />;
   if (p === '/me') return <Me />;

@@ -80,7 +80,7 @@ describe('counts', () => {
     resetStatsMemory(60_000);
     for (let i = 0; i < 5; i++) countSync(spy, undefined, 'OK', 1000, {}, NOW);
     countSync(spy, undefined, 'PARTIAL', 3000, { attendance: 'TIMEOUT' }, NOW);
-    count(spy, undefined, 'open', '1.4.0', 0, NOW);
+    count(spy, undefined, 'open', '1.5.0', 0, NOW);
     expect(batches).toBe(0);
     const r = await readStats(spy, NOW);
     // The tables, the counts, and the report: three batches for seven events.
@@ -90,7 +90,7 @@ describe('counts', () => {
     expect(at('outcome', 'PARTIAL')).toMatchObject({ n: 1, ms: 3000 });
     expect(at('hour', '12')).toMatchObject({ n: 6 });
     expect(at('part', 'attendance:TIMEOUT')).toMatchObject({ n: 1 });
-    expect(at('open', '1.4.0')).toMatchObject({ n: 1 });
+    expect(at('open', '1.5.0')).toMatchObject({ n: 1 });
   });
 
   it('a database that fails loses the counts, and never throws', async () => {
@@ -124,7 +124,7 @@ describe('through Raad', () => {
     const { db, call, sync } = raad();
     expect((await sync('2412345', 'secret', { 'X-Taleeb-Client-IP': '203.0.113.9' })).status).toBe(200);
     expect((await sync('2412345', 'nope')).status).toBe(401);
-    await call('/api/v1/status', { headers: { 'X-Taleeb-App': '1.4.0' } });
+    await call('/api/v1/status', { headers: { 'X-Taleeb-App': '1.5.0' } });
     await call('/api/v1/status', { headers: { 'X-Taleeb-App': '1.2.1' } });
     await call('/api/v1/status', { headers: { 'X-Taleeb-App': '9.9.9' } });
     await call('/api/v1/status');
@@ -133,7 +133,7 @@ describe('through Raad', () => {
     const outcomes = Object.fromEntries(r.counts.filter(c => c.kind === 'outcome').map(c => [c.what, c.n]));
     expect(outcomes).toEqual({ OK: 1, BAD_CREDENTIALS: 1 });
     const opens = Object.fromEntries(r.counts.filter(c => c.kind === 'open').map(c => [c.what, c.n]));
-    expect(opens).toEqual({ '1.4.0': 1, older: 1, unknown: 2 });
+    expect(opens).toEqual({ '1.5.0': 1, older: 1, unknown: 2 });
     const everything = JSON.stringify([db.sql.prepare('SELECT * FROM students').all(), db.sql.prepare('SELECT * FROM counts').all()]);
     expect(everything).not.toMatch(/2412345|203\.0\.113\.9|secret|nope/);
   });

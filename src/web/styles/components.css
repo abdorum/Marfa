@@ -54,9 +54,7 @@
 }
 .card.glass .label { color: var(--on-bg-2); }
 .card.tone-risk .card-head { background: var(--risk); }
-/* The owner's announcement: a lit bar. */
-.card.tone-lime .card-head { background: var(--highlight); color: var(--on-highlight); }
-.card.tone-lime .card-head > svg { color: var(--on-highlight); }
+/* The owner's announcement is a plain card: the lit amber is kept for what is the student's own (Docs/06). */
 
 /* The home board: one column on phones, more on wide screens. */
 .board { display: grid; gap: 18px; align-items: start; }
@@ -287,7 +285,10 @@ a.stat:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
 .dock .ico { inline-size: 28px; block-size: 24px; display: grid; place-items: center; }
 .dock .ico svg { inline-size: 20px; block-size: 20px; }
 .dock a[aria-current="page"] { background: var(--bar); color: var(--on-bar); }
-.dock .raad .ico { inline-size: 28px; block-size: 28px; }
+/* The centre: the student's own picture, no label (the one exception in the dock). */
+.dock a.space { padding: 4px; }
+.dock a.space .avatar { inline-size: 44px; block-size: 44px; box-shadow: 0 0 0 1px var(--line); }
+.dock a.space[aria-current="page"] .avatar { box-shadow: 0 0 0 2px var(--on-bar); }
 
 /* ---------- Sheets ---------- */
 .scrim { position: fixed; inset: 0; z-index: 40; display: grid; align-items: end; background: rgb(35 33 28 / 50%); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); animation: fade .2s var(--ease); }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { demoResult } from '../../src/adapters/sources/demo/source';
 import {
-  absenceBudget, academicWeek, alerts, attendanceLevel, avatarFor, clashes, clashingMeetings, courseColors, courseList, courseView,
+  absenceBudget, academicWeek, alerts, attendanceLevel, clashes, clashingMeetings, courseColors, courseList, courseView,
   meetingsOn, nextMeeting, nowAndNext, termProgress, toIsoDate, weekGrid, withStates,
 } from '../../src/core/derive';
 import { emptySnapshot, normalizeCourseKey, type Snapshot } from '../../src/core/model';
@@ -160,13 +160,5 @@ describe('courses', () => {
     expect(normalizeCourseKey('MED-102')).toBe('MED 102');
     expect(normalizeCourseKey('PYBIO 101L')).toBe('PYBIO 101L');
     expect(normalizeCourseKey('Anatomy - Lab')).toBe('Anatomy - Lab');
-  });
-
-  it('picks the same avatar for the same student, spread across students', () => {
-    const list = ['a.svg', 'b.svg', 'c.svg'];
-    expect(avatarFor('2000123', list)).toBe(avatarFor('2000123', list));
-    const picks = new Set(Array.from({ length: 30 }, (_, i) => avatarFor(String(2000000 + i), list)));
-    expect(picks.size).toBe(3);
-    expect(avatarFor('1', [])).toBeUndefined();
   });
 });

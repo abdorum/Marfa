@@ -13,6 +13,7 @@ import type { Extracted } from '../adapters/sources/peoplesoft/map';
 import type { SyncResponse } from '../adapters/sources/peoplesoft/pages';
 import { createPortal, type Mode, type PortalState, type Prefs } from '../app/portal';
 import { PRODUCT } from '../app/product';
+import { createSpace, type SpaceData } from '../app/space';
 import { courseColors } from '../core/derive';
 import { lastFetched } from '../core/snapshot';
 import { INSTITUTION } from '../institutions';
@@ -33,10 +34,11 @@ function devCapture(pages: SyncResponse['pages'], x: Extracted, cred: Credential
 
 const capture = import.meta.env.DEV && new URLSearchParams(location.search).has('capture');
 const store = createDeviceStore();
+const sealer = createSealer(store);
 
 export const portal = createPortal({
   store,
-  sealer: createSealer(store),
+  sealer,
   institution: INSTITUTION,
   sourceFor: (m: Mode) => createSource(m === 'demo' ? 'demo' : INSTITUTION.source, { institution: INSTITUTION, onRaw: capture ? devCapture : undefined }),
   demoHistory: () => demoHistory(new Date()),
@@ -48,6 +50,20 @@ export const portal = createPortal({
 
 const state = signal<PortalState>(portal.state);
 portal.subscribe(s => { state.value = s; });
+
+/** «مساحتي»: the student's picture and kit, sealed beside the snapshot (src/app/space.ts). */
+export const space = createSpace({ store, sealer, now: () => new Date(), id: () => crypto.randomUUID() });
+export const spaceData = signal<SpaceData>(space.data);
+space.subscribe(d => { spaceData.value = d; });
+/** The picture in the dock and on the record: the student's own, or the default one. */
+export const DEFAULT_PHOTO = '/avatars/default.jpg';
+export const photo = computed(() => spaceData.value.photo ?? DEFAULT_PHOTO);
+
+/** Signing out erases the device store, the kit with it; the kit in memory goes too. */
+export async function signOut() {
+  await portal.signOut();
+  space.forget();
+}
 
 export const ready = computed(() => state.value.ready);
 export const mode = computed(() => state.value.mode);
@@ -113,7 +129,7 @@ effect(() => {
 });
 
 export async function start() {
-  await portal.init({ demo: new URLSearchParams(location.search).has('demo') });
+  await Promise.all([portal.init({ demo: new URLSearchParams(location.search).has('demo') }), space.load().catch(() => {})]);
   void askPersistence();
   addEventListener('online', () => portal.setOnline(true));
   addEventListener('offline', () => portal.setOnline(false));

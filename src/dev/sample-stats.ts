@@ -24,7 +24,7 @@ export async function seedSampleStats(db: Db, now = Date.now()) {
       const roll = random();
       const code = roll < 0.86 ? 'OK' : roll < 0.93 ? 'PARTIAL' : roll < 0.96 ? 'TIMEOUT' : 'BAD_CREDENTIALS';
       countSync(db, undefined, code, 2500 + random() * 4000, code === 'PARTIAL' ? { attendance: 'TIMEOUT' } : {}, t);
-      for (let k = 0; k < 1 + Math.floor(random() * 3); k++) count(db, undefined, 'open', back > 6 || random() < 0.2 ? 'unknown' : '1.4.0', 0, t);
+      for (let k = 0; k < 1 + Math.floor(random() * 3); k++) count(db, undefined, 'open', back > 6 || random() < 0.2 ? 'unknown' : '1.5.0', 0, t);
     }
     if (back === 3) for (let k = 0; k < 4; k++) count(db, undefined, 'outcome', 'COOLDOWN', 0, day);
   }

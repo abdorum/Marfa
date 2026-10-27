@@ -77,8 +77,3 @@ export function hash(text: string): number {
   }
   return h;
 }
-
-/** Stable pick from the avatar list for a student. */
-export function avatarFor(studentId: string, avatars: readonly string[]): string | undefined {
-  return avatars.length ? avatars[hash(studentId) % avatars.length] : undefined;
-}

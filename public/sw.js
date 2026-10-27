@@ -4,7 +4,7 @@
 const VERSION = 'taleeb-__BUILD__';
 /** A page that takes longer than this opens from the cache, then updates for next time. */
 const NAVIGATE_WAIT_MS = 3000;
-const SHELL = ['/', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/avatars.json'];
+const SHELL = ['/', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/avatars/default.jpg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -99,6 +99,29 @@ describe('portal', () => {
     expect(areas).toHaveLength(1); // just fetched: nothing is due
   });
 
+  it('a refresh the student asks for waits half an hour after the last one that worked', async () => {
+    let clock = NOW.getTime();
+    const store = memoryStore();
+    const live = liveSource();
+    const portal = createPortal({
+      store, sealer: createSealer(store), institution: BMC, online: () => true,
+      engine: { ...engine, now: () => new Date(clock) },
+      sourceFor: (m: Mode) => (m === 'demo' ? createDemoSource(() => NOW) : live.source),
+      server: { status: async () => ({ paused: false, staleMinutes: 30 }) },
+    });
+    await portal.init();
+    await portal.signIn({ userid: '2000', pwd: 'secret' }, false);
+    expect(live.calls).toHaveLength(1);
+    clock += 10 * 60_000;
+    expect(portal.manualWait()).toBe(20 * 60_000);
+    expect((await portal.sync()).state).toBe('succeeded');
+    expect(live.calls).toHaveLength(1);
+    clock += 20 * 60_000;
+    expect(portal.manualWait()).toBe(0);
+    await portal.sync();
+    expect(live.calls).toHaveLength(2);
+  });
+
   it('after a failure of its own, does not try again by itself at once', async () => {
     const { portal, live } = setup({ fail: new RaadError('UNEXPECTED', 'BLOCKED') });
     await portal.init();

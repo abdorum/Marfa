@@ -6,7 +6,7 @@ import { ago, dateLabel, lang, strings } from '../i18n';
 import { RaadLine } from '../raad/RaadLine';
 import { navigate } from '../router';
 import { activeJob, hasCredentials, lastUpdated, mode, portal, prefs, raadStatus, snapshot } from '../state';
-import { Avatar, Link } from '../ui';
+import { Avatar, Link, toast } from '../ui';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -24,7 +24,9 @@ export function Home() {
   const busy = !!activeJob.value;
 
   const refresh = () => {
+    const wait = portal.manualWait();
     if (mode.value === 'live' && !hasCredentials.value) navigate('/raad');
+    else if (wait) toast(t.raad.refreshAfter(Math.ceil(wait / 60_000)));
     else if (raadStatus.value !== 'paused') void portal.sync();
   };
 
@@ -39,7 +41,7 @@ export function Home() {
               {week && <><span class="sep">/</span><span class="mono">{t.home.week(week)}</span></>}
             </p>
           </div>
-          <Link href="/me" aria-label={t.tabs.me}><Avatar /></Link>
+          <Link href="/space" aria-label={t.tabs.space}><Avatar /></Link>
         </div>
         <div class="dots-rule" aria-hidden="true" />
         <div class="hello-chips">

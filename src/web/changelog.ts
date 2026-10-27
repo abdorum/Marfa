@@ -10,6 +10,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.5.0',
+    date: '2026-10-27',
+    items: {
+      ar: [
+        'في وسط الشريط صورتك، تفتح «مساحتي»: هويتك وتحصيلك، والعُدّة، والأوسمة.',
+        'العُدّة اختصاراتٌ تحتاجها كثيرًا: رابط، أو نصّ، أو صورة، أو عدٌّ تنازليّ. على جهازك وحده، وتشاركها كما هي.',
+        'رعد في «المزيد»، والتحديث بيدك متاحٌ كل نصف ساعة، رفقًا بخادمه.',
+      ],
+      en: [
+        'Your picture in the middle of the bar opens My space: your identity and standing, your kit, and your badges.',
+        'The kit holds shortcuts you reach for often: a link, a note, a picture or a countdown. On your device only, and shared as they are.',
+        'Raad is in More, and a refresh by hand is open every half hour, to spare his server.',
+      ],
+    },
+  },
+  {
     version: '1.4.0',
     date: '2026-10-27',
     items: {

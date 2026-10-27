@@ -2,12 +2,12 @@
 import { signal } from '@preact/signals';
 import type { ComponentChildren, CSSProperties } from 'preact';
 import { useEffect } from 'preact/hooks';
-import { BookOpen, CalendarDays, ChevronLeft, House, User } from 'lucide-preact';
+import { BookOpen, CalendarDays, ChevronLeft, House, Menu } from 'lucide-preact';
 import { RAAD_AVATAR } from '../../../raad/identity';
 import { attendanceLevel } from '../../core/derive';
 import { strings } from '../i18n';
 import { back, navigate, path, tabOf } from '../router';
-import { prefs, raadStatus, snapshot, type RaadStatus } from '../state';
+import { photo, prefs, raadStatus, type RaadStatus } from '../state';
 
 interface LinkProps {
   href: string;
@@ -46,12 +46,9 @@ export function TopBar({ title, crumb, backTo, end, wide }: { title: ComponentCh
   );
 }
 
-/** The student's picture, or their initial. */
+/** The student's picture: their own, or the default one. Never taken from the college. */
 export function Avatar({ large }: { large?: boolean }) {
-  const s = snapshot.value?.student;
-  const initial = (s?.firstName.ar ?? s?.firstName.en ?? s?.name.en ?? '·').slice(0, 1).toUpperCase();
-  const pic = prefs.value.avatar;
-  return <span class={`avatar${large ? ' lg' : ''}`} aria-hidden="true">{pic ? <img src={pic} alt="" /> : initial}</span>;
+  return <span class={`avatar round${large ? ' lg' : ''}`} aria-hidden="true"><img src={photo.value} alt="" /></span>;
 }
 
 /** Raad's picture with his state: a ring while he works, a light for his status. */
@@ -160,9 +157,9 @@ export function Dock() {
       <div class="dock-in">
         {item('home', '/', <House />)}
         {item('schedule', '/schedule', <CalendarDays />)}
-        {item('raad', '/raad', <RaadAvatar size={28} />, 'raad')}
+        <Link href="/space" class="space" aria-label={t.space} aria-current={current === 'space' ? 'page' : undefined}><Avatar /></Link>
         {item('courses', '/courses', <BookOpen />)}
-        {item('me', '/me', <User />)}
+        {item('me', '/me', <Menu />)}
       </div>
     </nav>
   );

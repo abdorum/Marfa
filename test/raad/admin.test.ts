@@ -131,7 +131,7 @@ describe('the switches', () => {
     expect(state).toMatchObject({
       page: { notice: { ar: 'إعلانٌ جديد' }, staleMinutes: 60 },
       dashboard: { paused: true, message: { ar: 'من لوحة Cloudflare' }, notice: { ar: 'إعلانٌ قديم' }, staleMinutes: 30 },
-      rest: null, version: '1.4.0', stats: true,
+      rest: null, version: '1.5.0', stats: true,
     });
     expect(state.parts).toEqual(['center', 'grades', 'attendance', 'exams']);
   });

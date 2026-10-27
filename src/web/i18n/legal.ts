@@ -50,6 +50,8 @@ const privacyAr: LegalDoc = {
         'بياناتك الأكاديمية مشفّرةً، ومعها ما تغيّر منها في الأسبوعين الأخيرين، والفصول السابقة، حتى تسجيل الخروج.',
         'كلمة المرور مشفّرةً، فقط إذا اخترت «تذكّرني».',
         'تفضيلاتك، وسجلّ عمل رعد بخطواته وأوقاته، ولا بيانات شخصية فيه.',
+        'وما تضعه في «مساحتي»: صورتك إن رفعتها، والعُدّة من روابط ونصوصٍ وصورٍ ومواعيد. مشفّرةً كسائر بياناتك، لا تُرفع إلى أي خادم، ولا تؤخذ صورتك من نظام الكلية. وتُمحى مع تسجيل الخروج.',
+        'والنسخة الاحتياطية للعُدّة ملفٌّ تحفظه أنت حيث شئت، وهو غير مشفّر.',
         'والتشفير بمفتاحٍ لا يُستخرج من المتصفح. يحميها ممن يقرأ ملفات المتصفح، لا ممن يحمل جهازك مفتوحًا.',
       ],
     },
@@ -59,6 +61,7 @@ const privacyAr: LegalDoc = {
         'لا نبيع بياناتك ولا نشاركها مع أي جهة. لا إعلانات، ولا ملفات تتبّع، ولا أدوات تحليل من أطراف ثالثة.',
         'إذا شاركتَ بطاقةً صُنعت صورتها على جهازك، وتذهب حيث ترسلها أنت، وتستطيع أن تُخفي منها رقمك الجامعي وبريدك وجوالك.',
         'وملف التقويم الذي تصدّره يُصنع على جهازك كذلك، ولا يمرّ بخادم.',
+        'وما تشاركه من العُدّة يذهب من جهازك إلى حيث ترسله، لا يمرّ بنا.',
       ],
     },
     {
@@ -126,6 +129,8 @@ const privacyEn: LegalDoc = {
         'Your academic data, encrypted, with what changed in it over the last two weeks and your earlier terms, until you sign out.',
         'Your password, encrypted, only if you chose "Remember me".',
         'Your preferences, and Raad\'s log of steps and times, which holds no personal data.',
+        'What you put in My space: your picture if you add one, and your kit of links, notes, pictures and countdowns. Encrypted like the rest of your data, never uploaded to any server; your picture is never taken from the college system. It goes when you sign out.',
+        'A backup of your kit is a file you keep wherever you choose, and it is not encrypted.',
         'The encryption key cannot be exported from the browser. It protects against someone reading the browser\'s files, not against someone holding your unlocked device.',
       ],
     },
@@ -135,6 +140,7 @@ const privacyEn: LegalDoc = {
         'We do not sell or share your data with anyone. No ads, no tracking cookies, no third-party analytics.',
         'When you share a card, its picture is made on your device and goes where you send it. You can hide your student ID, email and mobile from it.',
         'The calendar file you export is also made on your device and never passes through a server.',
+        'Whatever you share from your kit goes from your device to wherever you send it, never through us.',
       ],
     },
     {

@@ -26,7 +26,6 @@ export interface Prefs {
   theme: Theme;
   absenceLimit: number;
   metrics: boolean;
-  avatar?: string;
   /** Home cards the student chose to hide. */
   hiddenCards: string[];
   /** The welcome tour was seen. */
@@ -76,8 +75,13 @@ export interface Portal {
   startDemo(): Promise<void>;
   exitDemo(): Promise<void>;
   signOut(): Promise<void>;
-  /** Reads everything now, as the student asked. */
+  /**
+   * Reads everything now, as the student asked; within `manualWait()` of the
+   * last refresh that worked, it reads nothing and gives that one back.
+   */
   sync(): Promise<SyncJob>;
+  /** How long, in ms, before the student may refresh again (0: now). */
+  manualWait(): number;
   /** Reads what is due, after a short random pause; nothing if nothing is due. */
   refreshIfStale(): void;
   setPrefs(patch: Partial<Prefs>): Promise<void>;
@@ -167,6 +171,17 @@ export function createPortal(d: PortalDeps): Portal {
     if (!state.mode || !state.hasCredentials || running || !state.online || state.server?.paused) return false;
     const last = state.jobs[0];
     return !(last?.state === 'failed' && now().getTime() - Date.parse(last.updatedAt) < AFTER_FAILURE_MS);
+  };
+
+  /**
+   * Raad's server is one for every student: a refresh the student asks for
+   * waits as long after the last one that worked as the app itself would
+   * (the owner's staleMinutes, 30 by default). After a failure it may run at once.
+   */
+  const manualWait = () => {
+    if (state.mode !== 'live') return 0;
+    const last = state.jobs.find(j => j.state === 'succeeded');
+    return last ? Math.max(0, Date.parse(last.updatedAt) + staleMs() - now().getTime()) : 0;
   };
 
   let spreading = false;
@@ -286,7 +301,11 @@ export function createPortal(d: PortalDeps): Portal {
       await d.store.set(KEYS.prefs, prefs);
     },
 
-    sync: () => sync(),
+    sync: () => {
+      const last = manualWait() > 0 ? state.jobs.find(j => j.state === 'succeeded') : undefined;
+      return last ? Promise.resolve(last) : sync();
+    },
+    manualWait,
     refreshIfStale,
     checkServer,
     wish: w => d.server?.wish?.(w) ?? Promise.resolve('failed'),

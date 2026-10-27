@@ -7,7 +7,7 @@ import { Share2 } from 'lucide-preact';
 import { strings } from '../i18n';
 import { openShare } from '../share/ShareSheet';
 
-export type CardTone = 'paper' | 'night' | 'glass' | 'lime';
+export type CardTone = 'paper' | 'night' | 'glass';
 
 export interface CardProps {
   /** Stable id: names the shared picture and the home board's choices. */
@@ -30,7 +30,7 @@ export function Card({ id, title, index, tone = 'paper', hud, actions, share = t
   const ref = useRef<HTMLElement>(null);
   const label = typeof title === 'string' ? title : id;
   return (
-    <section ref={ref} class={`card ${tone === 'paper' ? '' : tone === 'lime' ? 'tone-lime' : tone} ${hud ? 'hud' : ''} ${cls}`} data-card={id} aria-label={label} style={style}>
+    <section ref={ref} class={`card ${tone === 'paper' ? '' : tone} ${hud ? 'hud' : ''} ${cls}`} data-card={id} aria-label={label} style={style}>
       <header class="card-head">
         {index != null && <span class="idx" aria-hidden="true">{String(index).padStart(2, '0')}</span>}
         <h2>{title}</h2>

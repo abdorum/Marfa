@@ -249,7 +249,7 @@ export const ChangesCard: CardFn = ({ index }) => {
                 <span class="change-ico"><Icon aria-hidden="true" /></span>
                 <span class="t"><bdi>{p.title}</bdi></span>
                 <span class="m"><bdi>{p.text}</bdi></span>
-                <span class="e label">{ago(c.at)}</span>
+                <span class="e label">{isNew(c) && <span class="chip lime fresh-tag">{t.fresh}</span>}{ago(c.at)}</span>
               </li>
             );
           })}
@@ -431,7 +431,7 @@ export const NoticeCard: CardFn = ({ index }) => {
   const text = noticeText();
   if (!text) return null;
   return (
-    <Card id="notice" title={strings.value.notice.title} index={index} tone="lime" share={false} actions={<Megaphone size={20} aria-hidden="true" />}>
+    <Card id="notice" title={strings.value.notice.title} index={index} share={false} actions={<Megaphone size={20} aria-hidden="true" />}>
       <p style={{ lineHeight: 1.8, whiteSpace: 'pre-line' }}><bdi>{text}</bdi></p>
     </Card>
   );

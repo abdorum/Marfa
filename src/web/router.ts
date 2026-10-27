@@ -31,11 +31,12 @@ export function match(pattern: string, p = path.value): Record<string, string> |
   return params;
 }
 
-export type Tab = 'home' | 'schedule' | 'raad' | 'courses' | 'me';
+export type Tab = 'home' | 'schedule' | 'space' | 'courses' | 'me';
 
-/** Which dock tab a path belongs to. */
+/** Which dock tab a path belongs to. Raad's page is reached from «المزيد». */
 export function tabOf(p: string): Tab {
   const first = p.split('/')[1] ?? '';
   if (first === 'calendar') return 'schedule';
-  return first === 'schedule' || first === 'raad' || first === 'courses' || first === 'me' ? first : 'home';
+  if (first === 'raad') return 'me';
+  return first === 'schedule' || first === 'space' || first === 'courses' || first === 'me' ? first : 'home';
 }

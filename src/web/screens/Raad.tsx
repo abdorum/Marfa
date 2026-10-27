@@ -1,13 +1,13 @@
-// Raad's page, opened often: what he is doing now, a refresh, and his log.
-// Who he is and how he works are told once, in About (RaadAbout).
+// Raad's page, reached from «المزيد»: what he is doing now, a refresh, and his
+// log. Who he is and how he works are told once, in About (RaadAbout).
 import { Check, MapPin, RefreshCw, X } from 'lucide-preact';
 import type { Job } from '../../../raad/engine/types';
 import { INSTITUTION } from '../../institutions';
 import { Card } from '../cards/Card';
 import { ago, lang, strings } from '../i18n';
-import { failureText, RaadLine, stepLabel } from '../raad/RaadLine';
+import { failureText, RaadLine, stepLabel, useTick } from '../raad/RaadLine';
 import { activeJob, hasCredentials, jobs, lastUpdated, mode, online, portal, raadStatus, server } from '../state';
-import { Empty, RaadAvatar, TopBar } from '../ui';
+import { Empty, Link, RaadAvatar, TopBar } from '../ui';
 import { LoginForm } from './Login';
 
 function JobRow({ j }: { j: Job<any, any> }) {
@@ -40,13 +40,15 @@ function JobRow({ j }: { j: Job<any, any> }) {
 export function Raad() {
   const t = strings.value.raad;
   const status = raadStatus.value;
-  const canRun = hasCredentials.value && online.value && !activeJob.value && status !== 'paused';
+  useTick(60_000);
+  const wait = portal.manualWait();
+  const canRun = hasCredentials.value && online.value && !activeJob.value && status !== 'paused' && !wait;
   const message = server.value?.message?.[lang.value] ?? server.value?.message?.ar;
   const list = jobs.value.filter(j => j.type === 'sync');
 
   return (
     <>
-      <TopBar title={t.name} />
+      <TopBar backTo="/me" crumb={<Link href="/me">{strings.value.tabs.me}</Link>} title={t.name} />
       <main class="page">
         <Card id="raad" title={t.card} index={1} tone="night" hud>
           <div class="raad-id">
@@ -66,7 +68,7 @@ export function Raad() {
           <div data-noshare>
             <RaadLine onCard showIdle />
           </div>
-          <button class="btn primary block" data-noshare disabled={!canRun} onClick={() => void portal.sync()}><RefreshCw />{t.refresh}</button>
+          <button class="btn primary block" data-noshare disabled={!canRun} onClick={() => void portal.sync()}><RefreshCw />{wait ? t.refreshAfter(Math.ceil(wait / 60_000)) : t.refresh}</button>
         </Card>
 
         {mode.value === 'live' && !hasCredentials.value && (

@@ -5,5 +5,6 @@ export * from './attendance';
 export * from './changes';
 export * from './clashes';
 export * from './courses';
+export * from './record';
 export * from './schedule';
 export * from './time';
