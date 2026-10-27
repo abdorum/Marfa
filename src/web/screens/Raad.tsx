@@ -1,8 +1,7 @@
-// Raad's page: who he is (the data-fetching server), what he does and never
-// does, how he works, what he is doing now, and his log.
+// Raad's page, opened often: what he is doing now, a refresh, and his log.
+// Who he is and how he works are told once, in About (RaadAbout).
 import { Check, MapPin, RefreshCw, X } from 'lucide-preact';
 import type { Job } from '../../../raad/engine/types';
-import { PRODUCT } from '../../app/product';
 import { INSTITUTION } from '../../institutions';
 import { Card } from '../cards/Card';
 import { ago, lang, strings } from '../i18n';
@@ -41,7 +40,6 @@ function JobRow({ j }: { j: Job<any, any> }) {
 export function Raad() {
   const t = strings.value.raad;
   const status = raadStatus.value;
-  const home = INSTITUTION.raadHome?.[lang.value];
   const canRun = hasCredentials.value && online.value && !activeJob.value && status !== 'paused';
   const message = server.value?.message?.[lang.value] ?? server.value?.message?.ar;
   const list = jobs.value.filter(j => j.type === 'sync');
@@ -61,11 +59,8 @@ export function Raad() {
               </div>
             </div>
           </div>
-          <p class="raad-intro">{t.intro}</p>
           <div class="raad-meta">
-            {home && <div><small><MapPin size={11} /> {t.home}</small><b>{home}</b></div>}
             <div><small>{t.updatedLabel}</small><b>{lastUpdated.value ? ago(lastUpdated.value) : '—'}</b></div>
-            <div><small>{t.versionLabel}</small><b class="mono">{PRODUCT.version}</b></div>
           </div>
           {status === 'paused' && message && <p class="alert-box"><bdi>{message}</bdi></p>}
           <div data-noshare>
@@ -80,29 +75,50 @@ export function Raad() {
           </Card>
         )}
 
-        <Card id="raad-does" title={t.does} index={3}>
-          <ul class="creed">{t.doesList.map(x => <li><span><Check /></span><span>{x}</span></li>)}</ul>
-        </Card>
-
-        <Card id="raad-never" title={t.never} index={4}>
-          <ul class="creed never">{t.neverList.map(x => <li><span><X /></span><span>{x}</span></li>)}</ul>
-        </Card>
-
-        <Card id="raad-how" title={t.how} index={5}>
-          <ol class="flow">
-            {t.path.map((p, i) => (
-              <li class={i === 1 || i === 3 ? 'raad' : ''}>
-                <span class="n">{String(i + 1).padStart(2, '0')}</span>
-                <span><b>{p}</b><small>{t.pathNotes[i]}</small></span>
-              </li>
-            ))}
-          </ol>
-        </Card>
-
-        <Card id="raad-log" title={t.log} index={6} share={false}>
+        <Card id="raad-log" title={t.log} index={3} share={false}>
           {list.length ? <div class="list">{list.slice(0, 12).map(j => <JobRow key={j.id} j={j} />)}</div> : <Empty>{t.logEmpty}</Empty>}
         </Card>
       </main>
+    </>
+  );
+}
+
+/** Who Raad is, what he does and never does, and how: in About, for whoever looks for it. */
+export function RaadAbout({ from }: { from: number }) {
+  const t = strings.value.raad;
+  const home = INSTITUTION.raadHome?.[lang.value];
+  return (
+    <>
+      <Card id="raad-who" title={strings.value.about.raad} index={from} tone="night" hud>
+        <div class="raad-id">
+          <RaadAvatar size={64} status="idle" />
+          <div>
+            <h2>{t.name}</h2>
+            <div class="chips role"><span class="chip lime">{t.role}</span></div>
+          </div>
+        </div>
+        <p class="raad-intro">{t.intro}</p>
+        {home && <div class="raad-meta"><div><small><MapPin size={11} /> {t.home}</small><b>{home}</b></div></div>}
+      </Card>
+
+      <Card id="raad-does" title={t.does} index={from + 1}>
+        <ul class="creed">{t.doesList.map(x => <li><span><Check /></span><span>{x}</span></li>)}</ul>
+      </Card>
+
+      <Card id="raad-never" title={t.never} index={from + 2}>
+        <ul class="creed never">{t.neverList.map(x => <li><span><X /></span><span>{x}</span></li>)}</ul>
+      </Card>
+
+      <Card id="raad-how" title={t.how} index={from + 3}>
+        <ol class="flow">
+          {t.path.map((p, i) => (
+            <li class={i === 1 || i === 3 ? 'raad' : ''}>
+              <span class="n">{String(i + 1).padStart(2, '0')}</span>
+              <span><b>{p}</b><small>{t.pathNotes[i]}</small></span>
+            </li>
+          ))}
+        </ol>
+      </Card>
     </>
   );
 }

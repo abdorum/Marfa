@@ -45,15 +45,28 @@ export const en: Strings = {
       RATE_LIMIT: 'Too many requests. Wait a minute.',
       other: 'The college system is not responding. Try again shortly.',
     },
-    consent: (institution, where, terms, privacy) => [
-      `I know this portal is a student project, not ${institution}’s; that my sign-in passes through Raad’s server${where ? ` in ${where.split(',')[0]}` : ''} and is then forgotten, but for a pseudonym that counts students; and that the college may not approve of it. I agree to the `,
-      terms, ' and the ', privacy, '.',
+    consent: (terms, privacy) => [
+      'I know this project is unofficial, and I agree to the ', terms, ' and the ', privacy, ' for improving and developing it.',
     ],
-    worried: 'If you are worried, change your password in the official system. We never ask for it in any chat.',
     terms: 'terms of use',
     privacy: 'privacy policy',
   },
-  unofficial: institution => `An independent student project, not affiliated with or endorsed by ${institution}.`,
+  unofficial: 'An independent, unofficial student project, not affiliated with any official body.',
+
+  institution: {
+    pick: 'Choose your college',
+    missing: 'My college is not listed',
+    title: 'Ask for your college',
+    hint: 'Name your college. Requests are counted, and the most asked-for colleges are built first.',
+    name: 'College or university name',
+    city: 'City',
+    system: 'Its student system address',
+    optional: 'optional',
+    send: 'Send request',
+    sent: 'Request received. The most asked-for colleges come first.',
+    busy: 'Too many requests. Wait a minute.',
+    failed: 'Could not send. Try again shortly.',
+  },
 
   raad: {
     name: 'Raad',
@@ -319,6 +332,7 @@ export const en: Strings = {
     version: v => `Version ${v}`,
     official: 'Official system',
     contact: 'Contact channel',
+    raad: 'About Raad',
   },
 
   share: {

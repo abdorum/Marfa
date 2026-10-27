@@ -20,4 +20,6 @@ export interface RaadServer {
   status(): Promise<ServerStatus | undefined>;
   /** The student signed out: their pseudonym leaves the owner's statistics. Never fails, never waits. */
   forget?(userid: string): void;
+  /** A student asks for a college not in the portal yet: its name, and the city and system address if known. */
+  wish?(w: { name: string; city?: string; system?: string }): Promise<'sent' | 'busy' | 'failed'>;
 }

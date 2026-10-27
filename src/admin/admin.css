@@ -86,4 +86,8 @@
 .shares i::after { content: ''; position: absolute; inset-block: 0; inset-inline-start: 0; inline-size: var(--w); background: var(--c); border-radius: 0 2px 2px 0; }
 [dir="rtl"] .shares i::after { border-radius: 2px 0 0 2px; }
 
+.wishes .row-flex { gap: 6px; align-items: center; }
+.wishes .icon-btn.small { inline-size: 28px; block-size: 28px; }
+.wishes .icon-btn.small svg { inline-size: 14px; block-size: 14px; }
+
 .admin-toast { inset-block-end: calc(20px + env(safe-area-inset-bottom)); }

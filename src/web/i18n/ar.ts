@@ -67,15 +67,28 @@ export const ar = {
       RATE_LIMIT: 'كثرت الطلبات، فتمهّل دقيقة.',
       other: 'تعذّر الوصول إلى نظام الكلية، فأعد المحاولة بعد قليل.',
     } as Record<string, string>,
-    consent: (institution: string, where: string | undefined, terms: ComponentChildren, privacy: ComponentChildren) => [
-      `أعلم أنّ البوابة مشروعٌ طلابيٌّ لا تتبع ${institution}، وأنّ دخولي يمرّ بخادم رعد${where ? ` في ${where.split('،')[0]}` : ''} ثم يُنسى إلا معرّفًا مستعارًا يُعدّ به الطلاب، وأنّ الكلية قد لا ترضى استعمالها. وأوافق على `,
-      terms, ' و', privacy, '.',
+    consent: (terms: ComponentChildren, privacy: ComponentChildren) => [
+      'أعلم أنّ هذا المشروع غير رسمي، وأوافق على ', terms, ' و', privacy, ' لأغراض التحسين والتطوير.',
     ],
-    worried: 'إن قلقت فغيّر كلمة مرورك من النظام الرسمي، ولا نطلبها منك في أي محادثةٍ أبدًا.',
     terms: 'شروط الاستخدام',
     privacy: 'سياسة الخصوصية',
   },
-  unofficial: (institution: string) => `مشروعٌ طلابيٌّ مستقلّ، ليس تابعًا ${li(institution)} ولا معتمدًا منها.`,
+  unofficial: 'مشروعٌ طلابيٌّ مستقلّ غير رسمي، لا يتبع أيّ جهةٍ رسمية.',
+
+  institution: {
+    pick: 'اختر كليتك',
+    missing: 'كليتي غير مذكورة هنا',
+    title: 'اطلب كليتك',
+    hint: 'اكتب اسم كليتك، فتُجمع الطلبات، ويُبنى الربط للأكثر طلبًا أولًا.',
+    name: 'اسم الكلية أو الجامعة',
+    city: 'المدينة',
+    system: 'رابط نظام الطالب فيها',
+    optional: 'اختياري',
+    send: 'أرسل الطلب',
+    sent: 'وصل طلبك. يُبنى للأكثر طلبًا أولًا.',
+    busy: 'كثرت الطلبات، فتمهّل دقيقة.',
+    failed: 'تعذّر الإرسال، فأعد المحاولة بعد قليل.',
+  },
 
   raad: {
     name: 'رعد',
@@ -343,6 +356,7 @@ export const ar = {
     version: (v: string) => `الإصدار ${v}`,
     official: 'النظام الرسمي',
     contact: 'قناة التواصل',
+    raad: 'حول رعد',
   },
 
   share: {

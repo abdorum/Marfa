@@ -1,7 +1,9 @@
 // Sign-in, and the welcome tour before it (Docs/خطة النسخة 1: ج3). While
-// Raad signs in, his line tells the student each step.
-import { useState } from 'preact/hooks';
-import { Building2, Languages, Lock, Share2 } from 'lucide-preact';
+// Raad signs in, his line tells the student each step. The college is chosen
+// from a list; a student whose college is not there asks for it, and the
+// owner's page counts the requests (raad/server/wishes.ts).
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { Building2, Check, ChevronDown, Languages, Lock, Plus, Share2 } from 'lucide-preact';
 import type { SignInFailure } from '../../app/portal';
 import { INSTITUTION } from '../../institutions';
 import { lang, strings } from '../i18n';
@@ -9,7 +11,7 @@ import { RaadLine } from '../raad/RaadLine';
 import { navigate } from '../router';
 import { lastJob, portal, server, setPrefs } from '../state';
 import { COURSE_COLORS } from '../colors';
-import { Link, RaadAvatar, Spinner } from '../ui';
+import { Link, RaadAvatar, Sheet, Spinner } from '../ui';
 
 // Remembering the password is offered ready only in the installed app, which
 // lives on the student's own phone; in a browser tab the student chooses.
@@ -35,10 +37,10 @@ export function LoginForm({ onDone }: { onDone?: () => void }) {
       <label class="field">{t.userid}<input name="userid" inputMode="numeric" autoComplete="username" required disabled={busy} /></label>
       <label class="field">{t.password}<input name="pwd" type="password" autoComplete="current-password" required disabled={busy} /></label>
       <label class="check"><input name="remember" type="checkbox" defaultChecked={installedApp()} />{t.remember}</label>
-      {/* Consent is asked, never assumed: unticked, with the plain facts. */}
+      {/* Consent is asked, never assumed: unticked. The details are in the two documents it links. */}
       <label class="check consent">
         <input name="consent" type="checkbox" required />
-        <span>{t.consent(INSTITUTION.name[lang.value], INSTITUTION.raadHome?.[lang.value], <Link href="/terms">{t.terms}</Link>, <Link href="/privacy">{t.privacy}</Link>)}</span>
+        <span>{t.consent(<Link href="/terms">{t.terms}</Link>, <Link href="/privacy">{t.privacy}</Link>)}</span>
       </label>
       {busy && <RaadLine onCard />}
       {error && (
@@ -61,9 +63,68 @@ function LangSwitch() {
   );
 }
 
+/** A college not in the list: its name, and the city and system address if the student knows them. */
+function WishSheet({ onClose }: { onClose: () => void }) {
+  const t = strings.value.institution;
+  const [busy, setBusy] = useState(false);
+  const [said, setSaid] = useState<'sent' | 'busy' | 'failed'>();
+  return (
+    <Sheet title={t.title} onClose={onClose}>
+      <p class="label" style={{ lineHeight: 1.8 }}>{t.hint}</p>
+      {said === 'sent' ? <p class="alert-box ok" role="status">{t.sent}</p> : (
+        <form class="wish" onSubmit={async e => {
+          e.preventDefault();
+          const f = new FormData(e.currentTarget);
+          setBusy(true);
+          setSaid(await portal.wish({ name: String(f.get('name')).trim(), city: String(f.get('city')).trim(), system: String(f.get('system')).trim() }));
+          setBusy(false);
+        }}>
+          <label class="field">{t.name}<input name="name" required minLength={2} maxLength={80} autoComplete="organization" disabled={busy} /></label>
+          <label class="field">{t.city} <small>({t.optional})</small><input name="city" maxLength={40} autoComplete="address-level2" disabled={busy} /></label>
+          <label class="field">{t.system} <small>({t.optional})</small><input name="system" type="text" inputMode="url" dir="ltr" maxLength={200} placeholder="sis.example.edu" autoComplete="off" disabled={busy} /></label>
+          {said && <p class="alert-box" role="alert">{t[said]}</p>}
+          <button class="btn primary block" disabled={busy}>{busy && <Spinner />}{t.send}</button>
+        </form>
+      )}
+    </Sheet>
+  );
+}
+
+/** The college, as a list to choose from: the ones the portal serves, and a way to ask for another. */
+function InstitutionPicker({ onAsk }: { onAsk: () => void }) {
+  const t = strings.value.institution;
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: Event) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    addEventListener('pointerdown', away);
+    addEventListener('keydown', esc);
+    return () => { removeEventListener('pointerdown', away); removeEventListener('keydown', esc); };
+  }, [open]);
+  return (
+    <div class="inst-pick" ref={box}>
+      <button type="button" class="chip glass" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <Building2 />{INSTITUTION.name[lang.value]}<ChevronDown class="caret" />
+      </button>
+      {open && (
+        <ul class="inst-menu" role="listbox" aria-label={t.pick}>
+          <li role="option" aria-selected="true">
+            <button type="button" onClick={() => setOpen(false)}><Building2 /><span>{INSTITUTION.name[lang.value]}</span><Check class="tick" /></button>
+          </li>
+          <li role="option" aria-selected="false" class="missing">
+            <button type="button" onClick={() => { setOpen(false); onAsk(); }}><Plus /><span>{t.missing}</span></button>
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function Login() {
   const t = strings.value;
-  const institution = INSTITUTION.name[lang.value];
+  const [asking, setAsking] = useState(false);
   return (
     <main class="login">
       <div class="row-flex" style={{ justifyContent: 'flex-end' }}><LangSwitch /></div>
@@ -71,16 +132,14 @@ export function Login() {
         <img class="logo" src="/icons/icon.svg" alt="" width="78" height="78" />
         <h1>{t.appName}</h1>
         <p>{t.tagline}</p>
-        <span class="chip glass"><Building2 />{institution}</span>
+        <InstitutionPicker onAsk={() => setAsking(true)} />
       </div>
       <section class="card">
         <LoginForm onDone={() => navigate('/', { replace: true })} />
       </section>
       <button class="btn glass demo" onClick={() => void portal.startDemo().then(() => navigate('/', { replace: true }))}>{t.login.demo}</button>
-      <p class="legal-note">
-        {t.unofficial(institution)}
-        <br />{t.login.worried}
-      </p>
+      <p class="legal-note">{t.unofficial}</p>
+      {asking && <WishSheet onClose={() => setAsking(false)} />}
     </main>
   );
 }

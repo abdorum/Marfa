@@ -3,6 +3,7 @@
 import type { Cooldown } from '../../raad/server/guard';
 import type { StatsReport } from '../../raad/server/stats';
 import type { Switches } from '../../raad/server/switches';
+import type { Wish } from '../../raad/server/wishes';
 
 export interface AdminState {
   /** The page's switches, and the same switches set as Worker variables in the dashboard. */
@@ -66,6 +67,8 @@ export const adminApi = (key: string) => ({
   stats: () => call<StatsReport>(key, 'stats'),
   save: (page: Switches) => call<{ page: Switches }>(key, 'switches', { method: 'PUT', body: page }),
   endRest: () => call<{ rest: null }>(key, 'rest', { method: 'DELETE' }),
+  wishes: () => call<{ wishes: Wish[] }>(key, 'wishes').then(r => r.wishes),
+  removeWish: (wishKey: string) => call<object>(key, 'wishes', { method: 'DELETE', body: { key: wishKey } }),
 });
 
 /** Can Raad reach the college? The students' own question (GET /api/v1/health), answered once a minute at most. */

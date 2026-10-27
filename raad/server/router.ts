@@ -9,6 +9,7 @@
 //                         as NDJSON when asked (Accept: application/x-ndjson).
 //   POST /api/v1/forget   the student signed out: their pseudonym leaves the statistics.
 //   POST /api/v1/metrics  anonymous statistics, when the student opted in.
+//   POST /api/v1/wish     a college not in the portal yet, for the owner to build next (wishes.ts).
 //   *    /api/v1/admin/*  the owner's page, with the owner's key (admin.ts).
 import { handleAdmin } from './admin';
 import type { EdgeConnector, ServerEvent } from './connector';
@@ -22,6 +23,7 @@ import {
 import { clientIp, HEADERS, json, MAX_BODY, readJson } from './http';
 import { count, countSync, forget, pseudonym, seen, type Db, type Wait } from './stats';
 import { combine, dashboardSwitches, readSwitches, type SwitchVars } from './switches';
+import { addWish, parseWish } from './wishes';
 
 const HEALTH_CACHE_MS = 60_000;
 
@@ -113,6 +115,17 @@ async function forgetStudent(request: Request, env: Env): Promise<Response> {
   return new Response(null, { status: 204, headers: HEADERS });
 }
 
+/** A college a student asked for. The same answer whether it was new or not; no ID or address is kept. */
+async function wish(request: Request, env: Env): Promise<Response> {
+  const read = await readJson(request);
+  if ('refused' in read) return read.refused;
+  const w = parseWish(read.body);
+  if (!w) return json(400, { code: 'BAD_REQUEST' });
+  if (!env.STATS || (!dev(env) && !env.IP_LIMIT)) return json(503, { code: 'UNAVAILABLE' });
+  if (await limited(env.IP_LIMIT, `wish:${clientIp(request)}`)) return json(429, { code: 'RATE_LIMITED' }, { 'Retry-After': '60' });
+  return (await addWish(env.STATS, w)) ? new Response(null, { status: 204, headers: HEADERS }) : json(507, { code: 'FULL' });
+}
+
 let health: { at: number; body: Record<string, unknown> } | undefined;
 
 export async function handleApi(request: Request, env: Env = {}, ctx?: ExecutionContext, connector: EdgeConnector = CONNECTORS[0]!): Promise<Response> {
@@ -150,7 +163,7 @@ async function route(path: string, request: Request, env: Env, ctx: ExecutionCon
     return json(200, health.body);
   }
   if (path.startsWith('/api/v1/admin/')) return handleAdmin(path, request, env, connector);
-  if (path !== '/api/v1/sync' && path !== '/api/v1/metrics' && path !== '/api/v1/forget') return json(404, { code: 'NOT_FOUND' });
+  if (!['/api/v1/sync', '/api/v1/metrics', '/api/v1/forget', '/api/v1/wish'].includes(path)) return json(404, { code: 'NOT_FOUND' });
   if (request.method !== 'POST') return json(405, { code: 'METHOD' });
   if (!requestAllowed(request.headers)) return json(403, { code: 'FORBIDDEN' });
   if (!/^application\/json\b/i.test(request.headers.get('Content-Type') ?? '')) return json(415, { code: 'BAD_REQUEST' });
@@ -165,6 +178,7 @@ async function route(path: string, request: Request, env: Env, ctx: ExecutionCon
     }
   }
   if (path === '/api/v1/forget') return forgetStudent(request, env);
+  if (path === '/api/v1/wish') return wish(request, env);
 
   /** A sync refused before it reached the college, counted by its code. */
   const refuse = (status: number, body: { code: string } & Record<string, unknown>, extra?: Record<string, string>) => {

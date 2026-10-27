@@ -3,9 +3,10 @@
 // students' app. It talks to Raad with the owner's key (raad/server/admin.ts).
 import { render, type ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import { Activity, BookOpen, ChartColumn, Clock, Eraser, KeyRound, Lock, Megaphone, Power, RefreshCw, Smartphone, Users } from 'lucide-preact';
+import { Activity, BookOpen, Building2, ChartColumn, Clock, Eraser, KeyRound, Lock, Megaphone, Power, RefreshCw, Smartphone, Users, X } from 'lucide-preact';
 import type { StatsReport } from '../../raad/server/stats';
 import type { Switches } from '../../raad/server/switches';
+import type { Wish } from '../../raad/server/wishes';
 import { adminApi, AdminError, collegeHealth, dropKey, forgetStudent, keepKey, savedKey, type AdminState } from './api';
 import { Columns, Shares } from './charts';
 import { days, hours, syncs, totals } from './report';
@@ -349,6 +350,32 @@ function ForgetCard({ flash }: { flash: (m: string) => void }) {
   );
 }
 
+function WishesCard({ wishes, onRemove }: { wishes?: Wish[]; onRemove: (w: Wish) => void }) {
+  const top = Math.max(1, ...(wishes ?? []).map(w => w.n));
+  return (
+    <Card title="الكليات المطلوبة" index={11} icon={<Building2 aria-hidden="true" />}>
+      <p class="label" style={{ lineHeight: 1.8 }}>ما طلبه الطلاب من «كليتي غير مذكورة هنا»، الأكثر طلبًا أولًا. يُجمع الاسم الواحد وإن اختلفت كتابته. ولا يُحفظ معه من طلبه.</p>
+      {!wishes ? <p class="empty"><span class="spin" /></p> : wishes.length ? (
+        <ul class="shares wishes">
+          {wishes.map(w => (
+            <li key={w.key}>
+              <span class="t">
+                <bdi>{w.name}</bdi>
+                <small>{[w.city, w.system && <bdi class="mono" dir="ltr">{w.system}</bdi>, `آخر طلب ${date(w.last_day, { day: 'numeric', month: 'short' })}`].filter(Boolean).map((x, i) => <>{i ? ' · ' : ''}{x}</>)}</small>
+              </span>
+              <span class="row-flex">
+                <b class="mono"><bdi>{w.n}</bdi></b>
+                <button class="icon-btn small" aria-label={`احذف ${w.name}`} onClick={() => { if (confirm(`أتحذف «${w.name}» من القائمة؟`)) onRemove(w); }}><X /></button>
+              </span>
+              <i style={{ '--w': `${Math.max(2, (w.n / top) * 100)}%`, '--c': 'var(--chart-1)' }} />
+            </li>
+          ))}
+        </ul>
+      ) : <p class="empty">لم يطلب أحدٌ كليةً بعد.</p>}
+    </Card>
+  );
+}
+
 // ── The page ────────────────────────────────────────────────────────────────
 
 function App() {
@@ -356,6 +383,7 @@ function App() {
   const [problem, setProblem] = useState<string>();
   const [s, setS] = useState<AdminState>();
   const [stats, setStats] = useState<StatsReport>();
+  const [wishes, setWishes] = useState<Wish[]>();
   const [statsProblem, setStatsProblem] = useState<string>();
   const [health, setHealth] = useState<{ sis?: number; reachable?: boolean }>();
   const [loading, setLoading] = useState(false);
@@ -379,6 +407,7 @@ function App() {
       void collegeHealth().then(setHealth);
       if (state.stats) {
         api.stats().then(r => { setStats(r); setStatsProblem(undefined); }, (e: AdminError) => setStatsProblem(e.code));
+        api.wishes().then(setWishes, () => setWishes([]));
       } else setStatsProblem('NO_STATS');
       return true;
     } catch (e) {
@@ -463,6 +492,15 @@ function App() {
             <NoticeCard s={s} save={save} />
             <ReadingCard s={s} save={save} />
             <ForgetCard flash={flash} />
+            {s.stats && <WishesCard wishes={wishes} onRemove={async w => {
+              try {
+                await api.removeWish(w.key);
+                setWishes(list => list?.filter(x => x.key !== w.key));
+                flash('حُذفت من القائمة');
+              } catch {
+                flash('تعذّر الحذف. أعد المحاولة');
+              }
+            }} />}
           </div>
         </div>
         <p class="on-bg-muted foot">في الإحصاء أعدادٌ لكل يوم لا تدلّ على أحد، ولكل طالبٍ دخل معرّفٌ مستعارٌ لرقمه مع يومَي أول دخوله وآخره. يُحذف إذا سجّل الخروج، أو بعد سنةٍ لا يدخل فيها.</p>

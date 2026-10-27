@@ -1,6 +1,7 @@
 // Dev only (`npm run dev`): a month of made-up statistics, so the owner's page
 // (/admin/) has something to draw. Written through Raad's own code, never real.
 import { count, countSync, flushCounts, pseudonym, seen, type Db } from '../../raad/server/stats';
+import { addWish, parseWish } from '../../raad/server/wishes';
 
 const DAY_MS = 86_400_000;
 
@@ -23,9 +24,15 @@ export async function seedSampleStats(db: Db, now = Date.now()) {
       const roll = random();
       const code = roll < 0.86 ? 'OK' : roll < 0.93 ? 'PARTIAL' : roll < 0.96 ? 'TIMEOUT' : 'BAD_CREDENTIALS';
       countSync(db, undefined, code, 2500 + random() * 4000, code === 'PARTIAL' ? { attendance: 'TIMEOUT' } : {}, t);
-      for (let k = 0; k < 1 + Math.floor(random() * 3); k++) count(db, undefined, 'open', back > 6 || random() < 0.2 ? 'unknown' : '1.3.0', 0, t);
+      for (let k = 0; k < 1 + Math.floor(random() * 3); k++) count(db, undefined, 'open', back > 6 || random() < 0.2 ? 'unknown' : '1.4.0', 0, t);
     }
     if (back === 3) for (let k = 0; k < 4; k++) count(db, undefined, 'outcome', 'COOLDOWN', 0, day);
   }
   await flushCounts(db);
+  // Colleges asked for, written as students would.
+  const asked: [string, string?, string?][] = [
+    ['كلية فقيه للعلوم الطبية', 'جدة', 'sis.example-fakeeh.edu'], ['كليه فقيه للعلوم الطبيه'], ['كلية فقيه للعلوم الطبية', 'جدة'],
+    ['جامعة جدة', 'جدة'], ['جامعه جدة'], ['كلية ابن سينا الأهلية', 'جدة'], ['Dar Al-Hekma University', 'Jeddah'],
+  ];
+  for (const [i, [name, city, system]] of asked.entries()) await addWish(db, parseWish({ name, city, system })!, now - (asked.length - i) * DAY_MS);
 }

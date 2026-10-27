@@ -7,6 +7,8 @@
 //   PUT    /api/v1/admin/switches  sets the page's switches
 //   DELETE /api/v1/admin/rest      ends Raad's rest early: the college is back
 //   GET    /api/v1/admin/stats     the statistics of the last 30 days (stats.ts)
+//   GET    /api/v1/admin/wishes    the colleges students asked for, most asked first (wishes.ts)
+//   DELETE /api/v1/admin/wishes    removes one of them: {"key": "…"}
 import type { EdgeConnector } from './connector';
 import { RAAD_VERSION } from './config';
 import { cooldown, endCooldown, limited, requestAllowed } from './guard';
@@ -14,6 +16,7 @@ import { clientIp, json, readJson } from './http';
 import type { Env } from './router';
 import { readStats } from './stats';
 import { dashboardSwitches, parseSwitches, readSwitches, writeSwitches } from './switches';
+import { readWishes, removeWish } from './wishes';
 
 /** The shortest key the page accepts: anything shorter could be guessed. */
 export const MIN_ADMIN_KEY = 32;
@@ -75,6 +78,16 @@ export async function handleAdmin(path: string, request: Request, env: Env, conn
       console.error('stats failed:', (e as Error).name);
       return json(503, { code: 'NO_STATS' });
     }
+  }
+  if (path === '/api/v1/admin/wishes' && (method === 'GET' || method === 'DELETE')) {
+    if (!env.STATS) return json(503, { code: 'NO_STATS' });
+    if (method === 'GET') return json(200, { wishes: await readWishes(env.STATS) });
+    const read = await readJson(request);
+    if ('refused' in read) return read.refused;
+    const key = String(read.body.key ?? '');
+    if (!key || key.length > 200) return json(400, { code: 'BAD_REQUEST' });
+    await removeWish(env.STATS, key);
+    return json(200, {});
   }
   return json(404, { code: 'NOT_FOUND' });
 }

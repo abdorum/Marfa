@@ -254,6 +254,8 @@ a.stat:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
 
 .alert-box { background: var(--risk-soft); color: var(--risk-ink); padding: 10px 14px; border-inline-start: 3px solid var(--risk); font-size: 14px; display: grid; gap: 4px; }
 .alert-box small { font: 11px var(--font-mono); opacity: .8; direction: ltr; text-align: start; }
+.alert-box.ok { background: var(--ok-soft); color: var(--ok-ink); border-inline-start-color: var(--ok); }
+.field small { font-weight: 400; color: var(--ink-3); }
 
 /* ---------- Spinner ---------- */
 .spin { inline-size: 18px; block-size: 18px; flex: none; border: 2px solid currentColor; border-block-start-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }

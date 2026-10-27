@@ -1,6 +1,7 @@
 // Raad's server over HTTP, besides the data (raad/server/router.ts): his status
 // (GET /api/v1/status), which never reaches the college, so asking is cheap;
-// and, when the student signs out, that their pseudonym may go.
+// when the student signs out, that their pseudonym may go; and a college a
+// student asks for.
 import type { RaadServer, ServerStatus } from '../../ports/raad';
 
 export function createRaadServer(appVersion: string, base = '/api/v1'): RaadServer {
@@ -25,6 +26,14 @@ export function createRaadServer(appVersion: string, base = '/api/v1'): RaadServ
     },
     forget(userid) {
       void fetch(`${base}/forget`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userid }), keepalive: true }).catch(() => {});
+    },
+    async wish(w) {
+      try {
+        const res = await fetch(`${base}/wish`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(w) });
+        return res.status === 204 ? 'sent' : res.status === 429 ? 'busy' : 'failed';
+      } catch {
+        return 'failed';
+      }
     },
   };
 }

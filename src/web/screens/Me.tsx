@@ -14,6 +14,7 @@ import { LEGAL, UPDATED } from '../i18n/legal';
 import { navigate } from '../router';
 import { portal, prefs, setPrefs, signedIn, snapshot } from '../state';
 import { Avatar, Empty, Link, toast, TopBar } from '../ui';
+import { RaadAbout } from './Raad';
 
 const AVATARS_URL = '/avatars.json';
 
@@ -250,14 +251,15 @@ export function About() {
           <p style={{ lineHeight: 1.85 }}>{t.about.what}</p>
           <p class="label" style={{ lineHeight: 1.85 }}>{t.about.readOnly}</p>
           <p class="label" style={{ lineHeight: 1.85 }}>{t.about.privacy}</p>
-          <p class="label">{t.unofficial(INSTITUTION.name[lang.value])}</p>
+          <p class="label">{t.unofficial}</p>
         </Card>
         {entry && (
           <Card id="changelog" title={t.whatsNew.title(entry.version)} index={2}>
             <ul class="creed">{entry.items[lang.value].map(i => <li><span><Info /></span><span>{i}</span></li>)}</ul>
           </Card>
         )}
-        <Card id="about-links" title={t.about.title} index={3} share={false}>
+        <RaadAbout from={3} />
+        <Card id="about-links" title={t.about.title} index={7} share={false}>
           <div class="list">
             <MenuRow href="/privacy" icon={<Info />} title={LEGAL.privacy[lang.value].title} />
             <MenuRow href="/terms" icon={<Info />} title={LEGAL.terms[lang.value].title} />

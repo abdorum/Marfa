@@ -247,14 +247,14 @@ describe('the owner’s switches', () => {
 
   it('status tells whether Raad is paused, the announcement and the version, without reaching the college', async () => {
     const portal = fakePortal();
-    expect(await (await get('/api/v1/status')).json()).toEqual({ paused: false, version: '1.3.0' });
+    expect(await (await get('/api/v1/status')).json()).toEqual({ paused: false, version: '1.4.0' });
     const env: Env = {
       RAAD_PAUSED: '1', RAAD_MESSAGE_AR: 'متوقف للصيانة', NOTICE_AR: 'اختبارات منتصف الفصل الأحد', NOTICE_EN: 'Midterms on Sunday',
       RAAD_STALE_MINUTES: '60', CF_VERSION_METADATA: { id: '0123456789abcdef' },
     };
     expect(await (await get('/api/v1/status', env)).json()).toEqual({
       paused: true, message: { ar: 'متوقف للصيانة' }, notice: { ar: 'اختبارات منتصف الفصل الأحد', en: 'Midterms on Sunday' },
-      staleMinutes: 60, version: '1.3.0', build: '01234567',
+      staleMinutes: 60, version: '1.4.0', build: '01234567',
     });
     expect(portal.log).toHaveLength(0);
   });

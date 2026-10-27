@@ -82,6 +82,8 @@ export interface Portal {
   refreshIfStale(): void;
   setPrefs(patch: Partial<Prefs>): Promise<void>;
   checkServer(force?: boolean): Promise<void>;
+  /** Asks for a college not in the portal yet (the owner's list of colleges to build next). */
+  wish(w: { name: string; city?: string; system?: string }): Promise<'sent' | 'busy' | 'failed'>;
   setOnline(online: boolean): void;
 }
 
@@ -287,6 +289,7 @@ export function createPortal(d: PortalDeps): Portal {
     sync: () => sync(),
     refreshIfStale,
     checkServer,
+    wish: w => d.server?.wish?.(w) ?? Promise.resolve('failed'),
 
     async setPrefs(patch) {
       set({ prefs: { ...state.prefs, ...patch } });

@@ -205,6 +205,30 @@
 .legal-note { text-align: center; font-size: 12px; line-height: 1.9; color: var(--on-bg-2); }
 .legal-note a { color: var(--on-bg); text-decoration: underline; text-underline-offset: 3px; }
 .login .demo { justify-self: center; }
+/* The college picker: a list under the chip, and a way to ask for another. */
+.inst-pick { position: relative; }
+.inst-pick > .chip { cursor: pointer; }
+.inst-pick .caret { transition: transform .2s var(--ease); }
+.inst-pick > .chip[aria-expanded="true"] .caret { transform: rotate(180deg); }
+.inst-menu {
+  position: absolute; z-index: 20; inset-block-start: calc(100% + 8px); inset-inline-start: 50%; translate: -50% 0;
+  min-inline-size: 260px; list-style: none; margin: 0; padding: 4px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow-card);
+  display: grid; gap: 2px; text-align: start; animation: fade .15s var(--ease);
+}
+[dir="rtl"] .inst-menu { translate: 50% 0; }
+.inst-menu button {
+  inline-size: 100%; display: flex; align-items: center; gap: 10px; min-block-size: 44px; padding: 8px 12px;
+  background: none; border: 0; color: inherit; font: inherit; font-size: 14px; text-align: start; cursor: pointer;
+}
+.inst-menu button:hover, .inst-menu button:focus-visible { background: var(--surface-2); outline: none; }
+.inst-menu svg { inline-size: 16px; block-size: 16px; flex: none; }
+.inst-menu span { flex: 1; }
+.inst-menu [aria-selected="true"] button { font-weight: 500; }
+.inst-menu .tick { color: var(--ok-ink); }
+.inst-menu .missing { border-block-start: 1px dashed var(--line); padding-block-start: 2px; }
+.inst-menu .missing button { color: var(--ink-2); }
+.wish { display: grid; gap: 14px; }
 
 .welcome { min-block-size: 100dvh; max-inline-size: 480px; margin-inline: auto; display: grid; grid-template-rows: auto 1fr auto; gap: 18px; padding: calc(20px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom)); }
 .welcome-art { display: grid; place-items: center; min-block-size: 300px; }
